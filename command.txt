@@ -9,4 +9,5 @@
 -creat app
     python3 manage.py startapp users
     .then (add apps in settings => INSTALLED_APPS)
+    
     .then (add the url for this app)
