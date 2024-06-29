@@ -1,0 +1,4 @@
+Game app django channels
+# to get self.scope['user'] you need to generate token 
+# and stor it in localstorage on frontend and put it in the url router after
+#  ? and creat a custom Middleware in backend

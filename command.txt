@@ -1,0 +1,12 @@
+-setup vitual env
+    python3 -m venv env-yas 
+-intalled apps
+    pip freeze
+-activate env
+    source env-yas/bin/activate
+-start project
+    django-admin startproject src
+-creat app
+    python3 manage.py startapp users
+    .then (add apps in settings => INSTALLED_APPS)
+    .then (add the url for this app)
