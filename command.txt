@@ -1,5 +1,5 @@
 -setup vitual env
-    python3 -m venv env-yas 
+    python3 -m venv env-yas
 -intalled apps
     pip freeze
 -activate env
@@ -9,5 +9,5 @@
 -creat app
     python3 manage.py startapp users
     .then (add apps in settings => INSTALLED_APPS)
-    
+
     .then (add the url for this app)

@@ -1,51 +1,48 @@
 import json
-from channels.generic.websocket import WebsocketConsumer
-from asgiref.sync import async_to_sync
-from .models import ReadyToPlay
+import asyncio
+from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
 from django.core.serializers import serialize
+from .game import Game
 # Create your views here.
 
-class GameConsumer(WebsocketConsumer):
-    players = {}
-    def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = f'chat_{self.room_name}'
-        self.username = self.scope['user'].username
-        async_to_sync(self.channel_layer.group_add)(
-            self.room_group_name,
+class GameConsumer(AsyncWebsocketConsumer):
+    rooms = {}
+    async def connect(self):
+        self.room_name = f'room_test'
+        await self.channel_layer.group_add(
+            self.room_name,
             self.channel_name
         )
-        if self.username not in GameConsumer.players:
-            GameConsumer.players[self.username] = 'client'
-            ReadyToPlay(username=self.username).save()
-            self.send_players_list()
-        # print(f"players {GameConsumer.players}" ) 
-        self.accept()
+        await self.accept()
+        if "player1" not in GameConsumer.rooms.get(self.room_name,{}):
+            self.player_name = 'player1'
+            GameConsumer.rooms[self.room_name] = {"player1" : self}
+        else:
+            self.player_name = 'player2'
+            room = GameConsumer.rooms[self.room_name]
+            room["player2"] = self
+            game = Game(self)
+            room["game"] = game
+            self.task = asyncio.create_task(game.runMatch())
+        print(f'{self.player_name} is connect')
 
-    def disconnect(self, close_code):
-        async_to_sync(self.channel_layer.group_discard)(
-            self.room_group_name,
+
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.room_name,
             self.channel_name
         )
-        if self.username in GameConsumer.players:
-            del GameConsumer.players[self.username]
-            ReadyToPlay.objects.get(username=self.username).delete()
-            self.send_players_list()
+        self.close()
+        del GameConsumer.rooms[self.room_name][self.player_name]
+        print(f'{self.player_name} is disconnect')
+        # self.task.cancel()
 
-    def receive(self, text_data):
+    async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         pass
 
+    async def game_update(self, event):
+        data = event['data']
 
-    def send_players_list(self):
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
-            {
-                'type': 'update_players_list',
-                'players': ReadyToPlay.objects.all()
-            }
-        )
-
-    def update_players_list(self, event):
-        data = serialize('json',event['players'])
-        self.send(data)
+        await self.send(text_data=json.dumps(data))
