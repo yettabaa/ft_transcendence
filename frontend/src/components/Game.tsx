@@ -20,7 +20,9 @@ const PingPongTable: React.FC = () => {
         ball: { x: 50, y: 50 },
     });
     const table: any = useRef();
+    const myPaddle: any = useRef();
     const paddle: any = useRef();
+    const ball: any = useRef();
     const ws: any = useRef();
 
     useEffect(() => {
@@ -29,8 +31,16 @@ const PingPongTable: React.FC = () => {
         ws.current.onopen = () => { console.log('WebSocket connection established'); };
 
         ws.current.onmessage = (event: any) => {
-            console.log(event.data)
-            // const data = JSON.parse(event.data);
+            const data = JSON.parse(event.data);
+            // console.log(data.ballx)
+            if (data.update == 'ball') {
+                ball.current.style.top = `${data.bally}%`
+                ball.current.style.left = `${data.ballx}%`
+            }
+            else if (data.update == 'paddle'){
+
+                paddle.current.style.top = `${data.pos}%`
+            }
             // setPositions(data);
         };
 
@@ -50,8 +60,8 @@ const PingPongTable: React.FC = () => {
             / tableDimention.height) * 100;
             (posPaddle < 10) && (posPaddle = 10);
             (posPaddle > 90) && (posPaddle = 90);
-            // ws.current.send(posPaddle);
-            paddle.current.style.top = `${posPaddle}%`;
+            ws.current.send(posPaddle);
+            myPaddle.current.style.top = `${posPaddle}%`;
         }
 
         window.addEventListener('mousemove', handelMouse);
@@ -66,17 +76,16 @@ const PingPongTable: React.FC = () => {
         <div className="bg-bg h-[100vh] flex  justify-center">
             <div className="relative flex flex-row bg-green-700 w-[60vw] h-[30vh] rounded-md self-center overflow-hidden"
                 ref={table} >
-                <div
-                    ref={paddle}
+                <div ref={myPaddle}
                     className="absolute w-[2%] h-[20%] bg-white translate-y-[-50%]"
                     style={{ left: `${positions.paddle1.x}%`, top: `${positions.paddle1.y}%` }}
                 />
-                <div
+                <div ref={paddle}
                     className="absolute w-[2%] h-[20%] bg-white translate-y-[-50%]"
                     style={{ left: `${positions.paddle2.x}%`, top: `${positions.paddle2.y}%` }}
                 />
-                <div
-                    className="absolute w-5 h-5 bg-white rounded-full translate-y-[-50%] translate-x-[-50%]"
+                <div ref={ball}
+                    className="absolute w-[2vh] h-[2vh] bg-white rounded-full translate-y-[-50%] translate-x-[-50%]"
                     style={{ left: `${positions.ball.x}%`, top: `${positions.ball.y}%` }}
                 />
             </div>
