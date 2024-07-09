@@ -57,14 +57,27 @@ export class Ball {
         this.Vi += .0001 * delta * BALLSPEED;
         this.ballRect = this.ballElem.getBoundingClientRect();
         this.tableRect = this.tableElem.getBoundingClientRect();
-        if (this.isBound())
+        // if (this.isBound())
+        //     this.DirY *= -1;
+        // if ((this.ballRect.left <= controlledPaddle.Dimention.right &&
+        //     this.y > controlledPaddle.begin && this.y < controlledPaddle.end) ||
+        //     (this.ballRect.right > paddle.Dimention.left &&
+        //     this.y >= paddle.begin && this.y <= paddle.end)) {
+        //     this.DirX *= -1;
+        // }
+
+        if (0 >= this.y || this.y >= 100)
             this.DirY *= -1;
-        if ((this.ballRect.left <= controlledPaddle.Dimention.right &&
-            this.y > controlledPaddle.begin && this.y < controlledPaddle.end) ||
-            (this.ballRect.right > paddle.Dimention.left &&
-            this.y >= paddle.begin && this.y <= paddle.end)) {
+        if (0 >= this.x || this.x >= 100)
             this.DirX *= -1;
-        }
+        let dx = Math.abs(this.x - 3)
+        let dy = Math.abs(this.y - controlledPaddle.pos)
+        // if (dx <= 10 && dy <= )
+        // if (this.x <= 1 + 2 && (this.y >= controlledPaddle.pos - 20 && this.y <= controlledPaddle.pos + 20))
+        //     this.DirX *= (this.DirX < 0) ? -1 : 1;
+        // else if (this.x <= 1 + 2)
+        // if (this.x >= 97 && (this.y >= paddle.pos - 20 && this.y <= paddle.pos + 20))
+        //     this.DirX *= (this.DirX > 0) ? -1 : 1;
         this.x += this.DirX * delta * this.Vi;
         this.y += this.DirY * delta * this.Vi;
         this.ballElem.style.left = `${this.x}%`;

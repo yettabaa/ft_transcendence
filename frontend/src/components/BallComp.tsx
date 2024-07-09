@@ -41,9 +41,9 @@ const BallComp = () => {
             controlledPaddleElem.current && paddleBootElem.current) {
             ball.current.update(delta, controlledPaddle.current, paddleBoot.current);
             paddleBoot.current.update(delta, ball.current.y);
-            if (ball.current.isFailure()) {
-                ball.current.reset();
-            }
+            // if (ball.current.isFailure()) {
+            //     ball.current.reset();
+            // }
         }
     });
     return (

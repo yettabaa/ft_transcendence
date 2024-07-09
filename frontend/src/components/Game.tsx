@@ -1,6 +1,5 @@
-// src/components/PingPongTable.tsx
 import React, { useEffect, useState, useRef } from 'react';
-
+import { v4 as uuidv4 } from 'uuid';
 
 interface Position {
     x: number;
@@ -19,29 +18,67 @@ const PingPongTable: React.FC = () => {
         paddle2: { x: 97, y: 50 },
         ball: { x: 50, y: 50 },
     });
+    const [isVesible, setIsVesible] = useState<boolean>(false)
+    const leftScore: any = useRef()
+    const rightScore: any = useRef()
     const table: any = useRef();
     const myPaddle: any = useRef();
     const paddle: any = useRef();
     const ball: any = useRef();
     const ws: any = useRef();
+    const [ballSize, setBallSize] = useState<number>(0);
+
+    const handelMouse = (e: any) => {
+        const tableDimention: any = table.current.getBoundingClientRect();
+        let posPaddle: number = ((e.y - tableDimention.top)
+            / tableDimention.height) * 100;
+        (posPaddle < 10) && (posPaddle = 10);
+        (posPaddle > 90) && (posPaddle = 90);
+        ws.current.send(posPaddle);
+        myPaddle.current.style.top = `${posPaddle}%`;
+    }
+
+    const handleResize = () => {
+        if (table.current) {
+            const tableWidth = table.current.offsetWidth;
+            const radius = tableWidth * 0.03; // 3% of table width
+            setBallSize(radius);
+        }
+    }
 
     useEffect(() => {
-        ws.current = new WebSocket('ws://127.0.0.1:8000/ws/game/');
+        const uniqueId = uuidv4();
+        console.log('unique ',uniqueId)
+        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${uniqueId}/`);
 
         ws.current.onopen = () => { console.log('WebSocket connection established'); };
 
         ws.current.onmessage = (event: any) => {
             const data = JSON.parse(event.data);
-            // console.log(data.ballx)
+            // console.log(data)
             if (data.update == 'ball') {
-                ball.current.style.top = `${data.bally}%`
-                ball.current.style.left = `${data.ballx}%`
+                ball.current.style.top = `${data.y}%`;
+                ball.current.style.left = `${data.x}%`;
+                rightScore.current.innerText = data.right;
+                leftScore.current.innerText = data.left;
             }
-            else if (data.update == 'paddle'){
-
+            else if (data.update == 'paddle') {
                 paddle.current.style.top = `${data.pos}%`
             }
-            // setPositions(data);
+            else if (data.init == 'paddle') {
+                setIsVesible(true)
+                setPositions((prevPositions) => ({
+                    ...prevPositions,
+                    paddle1: {
+                        ...prevPositions.paddle1,
+                        x: data.my,
+                    },
+                    paddle2: {
+                        ...prevPositions.paddle2,
+                        x: data.side,
+                    },
+                }))
+            }
         };
 
         ws.current.onclose = (event: any) => {
@@ -53,42 +90,54 @@ const PingPongTable: React.FC = () => {
         };
 
         ws.current.onerror = (error: any) => { console.error(`WebSocket error: ${error.message}`); };
-
-        const handelMouse = (e: any) => {
-            const tableDimention: any = table.current.getBoundingClientRect();
-            let posPaddle: number = ((e.y - tableDimention.top)
-            / tableDimention.height) * 100;
-            (posPaddle < 10) && (posPaddle = 10);
-            (posPaddle > 90) && (posPaddle = 90);
-            ws.current.send(posPaddle);
-            myPaddle.current.style.top = `${posPaddle}%`;
-        }
-
+        
+        handleResize()
         window.addEventListener('mousemove', handelMouse);
-
-        return () => { ws.current.close(); window.removeEventListener('mousemove', handelMouse); };
+        window.addEventListener('resize', handleResize);
+        return () => { 
+            // if (ws.current)
+                ws.current.close();
+            window.removeEventListener('mousemove', handelMouse); 
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
-    // useEffect(() => {
-    //   }, []);
+    const handelButton = () => {
+
+        ws.current.send()
+    }
 
     return (
-        <div className="bg-bg h-[100vh] flex  justify-center">
-            <div className="relative flex flex-row bg-green-700 w-[60vw] h-[30vh] rounded-md self-center overflow-hidden"
+        <div className="bg-bg h-[100vh] flex flex-col gap-8 justify-center items-center">
+            <div className="h-[10%] flex flex-row justify-center items-center">
+                <div ref={rightScore} className="p-[0.5rem] border-r" > 0 </div>
+                <div ref={leftScore} className="p-[0.5rem] "> 0 </div>
+            </div>
+            <div className="relative flex flex-row bg-green-700 w-[60vw] h-[40vw] rounded-md self-center overflow-hidden"
                 ref={table} >
-                <div ref={myPaddle}
-                    className="absolute w-[2%] h-[20%] bg-white translate-y-[-50%]"
-                    style={{ left: `${positions.paddle1.x}%`, top: `${positions.paddle1.y}%` }}
-                />
-                <div ref={paddle}
-                    className="absolute w-[2%] h-[20%] bg-white translate-y-[-50%]"
-                    style={{ left: `${positions.paddle2.x}%`, top: `${positions.paddle2.y}%` }}
-                />
+                {isVesible && (
+                    <>
+                        <div ref={myPaddle}
+                            className="absolute text-cyan-700 w-[2%] h-[20%] bg-white translate-y-[-50%]"
+                            style={{ left: `${positions.paddle1.x}%`, top: `${positions.paddle1.y}%` }}
+                        />
+                        <div ref={paddle}
+                            className="absolute w-[2%] h-[20%] bg-white translate-y-[-50%]"
+                            style={{ left: `${positions.paddle2.x}%`, top: `${positions.paddle2.y}%` }}
+                        />
+                    </>
+                )}
                 <div ref={ball}
-                    className="absolute w-[2vh] h-[2vh] bg-white rounded-full translate-y-[-50%] translate-x-[-50%]"
-                    style={{ left: `${positions.ball.x}%`, top: `${positions.ball.y}%` }}
+                    className="absolute  bg-white rounded-full translate-y-[-50%] translate-x-[-50%]"
+                    style={{ left: `${positions.ball.x}%`, top: `${positions.ball.y}%`,
+                            width: `${ballSize}px`, height: `${ballSize}px` }}
                 />
             </div>
+            <button className=" bg-blue-500 w-[10rem] py-2 px-4 rounded"
+                onClick={handelButton}
+            >
+                start
+            </button>
         </div>
     );
 };

@@ -9,7 +9,10 @@ class GameConsumer(AsyncWebsocketConsumer):
     rooms = {}
     async def connect(self):
         self.room_name = f'room_test'
-        await self.channel_layer.group_add(
+        self.uuid = self.scope['url_route']['kwargs']['uuid']
+        
+        print(self.uuid)
+        await self.channel_layer.group_add( # type: ignore
             self.room_name,
             self.channel_name
         )
@@ -32,15 +35,15 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
+        await self.channel_layer.group_discard( # type: ignore
             self.room_name,
             self.channel_name
         )
         if hasattr(self, 'task'):
             self.task.cancel()
-        self.close()
         del GameConsumer.rooms[self.room_name][self.player_name]
         print(f'{self.player_name} is disconnect')
+        await self.close()
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -54,7 +57,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.send_update(data, self.player_name)
 
     async def send_update(self, data, sender):
-        await self.channel_layer.group_send(
+        await self.channel_layer.group_send( # type: ignore
             self.room_name,
             {
                 'type': 'game.update',
