@@ -61,10 +61,13 @@ class Game:
         self.rightScore = 0
         self.socket = socket1
         self.speed = Game.speedBall
+        self.ingame = True
 
     def edges_collision(self):
-        if not 0 + Ball.reduisHeight <= self.ball.y <= 100 - Ball.reduisHeight:
-                self.ball.yOrt *= -1
+        if self.ball.y <= 0 + Ball.reduisHeight:
+            self.ball.yOrt *= -1 if self.ball.yOrt < 0 else 1
+        if self.ball.y >= 100 - Ball.reduisHeight:
+            self.ball.yOrt *= -1 if self.ball.yOrt > 0 else 1
         # if not 0 + Ball.reduisWidth <= self.ball.x <= 100 - Ball.reduisWidth:
         #         self.ball.xOrt *= -1
         if self.ball.x > 100 - Ball.reduisWidth:
@@ -80,7 +83,7 @@ class Game:
 
     def paddles_collision(self):
         if self.rightpaddle.collision(self.ball):
-                self.ball.xOrt *= -1 if self.ball.xOrt > 0 else 1
+            self.ball.xOrt *= -1 if self.ball.xOrt > 0 else 1
         if self.leftPaddle.collision(self.ball):
             self.ball.xOrt *= -1 if self.ball.xOrt < 0 else 1
 
@@ -88,6 +91,7 @@ class Game:
         await self.leftPaddle.init_paddel()
         await self.rightpaddle.init_paddel()
         previous_time = time.time()
+        # while self.rightScore < 2 and self.leftScore < 2:
         while True:
             dataTosSend = {
                 'update': 'ball',
@@ -106,4 +110,4 @@ class Game:
             self.edges_collision()
             self.paddles_collision()
             await asyncio.sleep(0.029)
-
+        self.ingame = False
