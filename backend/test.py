@@ -1,5 +1,5 @@
 def check(dic):
-    return {key for key, value in dic.items() if len(value) == 1}
+    return {key:value for key, value in dic.items() if len(value) == 1}
 
 # def check_by_username(dic, username):
 #     for key, value in dic.items():
@@ -16,13 +16,14 @@ dic["room_name2"]["player2"] = 6
 dic["room_name3"] = {"player1":6}
 # for key ,value in dic.items():
 #     print (value)
-# t = check(dic)
+t = check(dic)
 # print(dic)
 # r = dic[list(t)[0]]
 # r['ayya'] = 5
 # print(dic)
 
-print('room_name' in  dic)
+print(t)
+print(list(t))
 
 # waiting_player = check(dic=dic)
 

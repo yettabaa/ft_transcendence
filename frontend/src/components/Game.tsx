@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { BrowserRouter as Router, Route, Routes, useParams } from 'react-router-dom';
 
 interface Position {
     x: number;
@@ -27,15 +28,23 @@ const PingPongTable: React.FC = () => {
     const ball: any = useRef();
     const ws: any = useRef();
     const [ballSize, setBallSize] = useState<number>(0);
+    const { username } = useParams<{ username: string }>();
+    const { game_id } = useParams<{ game_id: string }>();
 
+    if (username == undefined || username === '' || username == null)
+        return ;
     const handelMouse = (e: any) => {
         const tableDimention: any = table.current.getBoundingClientRect();
         let posPaddle: number = ((e.y - tableDimention.top)
             / tableDimention.height) * 100;
         (posPaddle < 10) && (posPaddle = 10);
         (posPaddle > 90) && (posPaddle = 90);
-        ws.current.send(posPaddle);
         myPaddle.current.style.top = `${posPaddle}%`;
+        ws.current.send(JSON.stringify({
+            type: 'update',
+            y: posPaddle
+        }));
+
     }
 
     const handleResize = () => {
@@ -47,25 +56,29 @@ const PingPongTable: React.FC = () => {
     }
 
     useEffect(() => {
-        const uniqueId = uuidv4();
-        console.log('unique ',uniqueId)
-        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${uniqueId}/`);
+        console.log(username)
+        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/${game_id}/`);
 
         ws.current.onopen = () => { console.log('WebSocket connection established'); };
 
         ws.current.onmessage = (event: any) => {
             const data = JSON.parse(event.data);
             // console.log(data)
-            if (data.update == 'ball') {
+            if (data.type == 'ball') {
                 ball.current.style.top = `${data.y}%`;
                 ball.current.style.left = `${data.x}%`;
+            }
+            if (data.type == 'score') {
                 rightScore.current.innerText = data.right;
                 leftScore.current.innerText = data.left;
             }
-            else if (data.update == 'paddle') {
+            else if (data.type == 'paddle') {
                 paddle.current.style.top = `${data.pos}%`
             }
-            else if (data.init == 'paddle') {
+            else if(data.type == 'opponents') {
+                console.log(data)
+            }
+            else if (data.type == 'init_paddle') {
                 setIsVesible(true)
                 setPositions((prevPositions) => ({
                     ...prevPositions,
@@ -95,7 +108,7 @@ const PingPongTable: React.FC = () => {
         window.addEventListener('mousemove', handelMouse);
         window.addEventListener('resize', handleResize);
         return () => { 
-            // if (ws.current)
+            if (ws.current)
                 ws.current.close();
             window.removeEventListener('mousemove', handelMouse); 
             window.removeEventListener('resize', handleResize);
@@ -103,15 +116,16 @@ const PingPongTable: React.FC = () => {
     }, []);
 
     const handelButton = () => {
-
-        ws.current.send()
+        ws.current.send(JSON.stringify({
+            type: 'start',
+        }));
     }
 
     return (
         <div className="bg-bg h-[100vh] flex flex-col gap-8 justify-center items-center">
             <div className="h-[10%] flex flex-row justify-center items-center">
-                <div ref={rightScore} className="p-[0.5rem] border-r" > 0 </div>
-                <div ref={leftScore} className="p-[0.5rem] "> 0 </div>
+                <div ref={leftScore} className="p-[0.5rem] border-r"> 0 </div>
+                <div ref={rightScore} className="p-[0.5rem] " > 0 </div>
             </div>
             <div className="relative flex flex-row bg-green-700 w-[60vw] h-[40vw] rounded-md self-center overflow-hidden"
                 ref={table} >

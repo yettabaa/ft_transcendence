@@ -9,7 +9,7 @@ const App: React.FC = () => {
         <Router>
             <Routes>
                 <Route path="/login" element={<Login />} />
-                <Route path="/game" element={<Game />} />
+                <Route path="/game/:username/:game_id" element={<Game />} />
                 <Route path="/game-boot" element={<Game_boot />} />
             </Routes>
         </Router >
