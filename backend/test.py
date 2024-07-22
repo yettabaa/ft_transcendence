@@ -20,11 +20,12 @@ t = check(dic)
 # print(dic)
 # r = dic[list(t)[0]]
 # r['ayya'] = 5
-# print(dic)
+del dic['room_name']
+print(dic)
 
-print(t)
-print(list(t))
-
+# print(t)
+# print(list(t))
+# print( (dic.get('room_ame')))
 # waiting_player = check(dic=dic)
 
 # print(waiting_player)

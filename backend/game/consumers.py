@@ -14,6 +14,7 @@ class RemoteGame(AsyncWebsocketConsumer):
         if not waiting_room :
             print(f'user1 {self.username} connect')
             self.room_name = 'room_' + str(uuid.uuid4())
+            self.userId = 'username1'
             RemoteGame.games[self.room_name] = {
                 'username1': self.username,
                 'username2': self,
@@ -27,6 +28,7 @@ class RemoteGame(AsyncWebsocketConsumer):
             print(f'user2 {self.username} connect')
 
             room = RemoteGame.games[list(waiting_room)[0]]
+            self.userId = 'username2'
             socket1 = room['username2']
             self.room_name = socket1.room_name
             await self.channel_layer.group_add( # type: ignore
@@ -83,11 +85,12 @@ class RemoteGame(AsyncWebsocketConsumer):
             self.channel_name
         )
         await self.close()
-        if 'game' in RemoteGame.games[self.room_name].values():
-            del RemoteGame.games[self.room_name]['game']
-            task = RemoteGame.games[self.room_name]['task']
-            task.cancel()
-        del RemoteGame.games[self.room_name]
+        # TODO - NOTIFIY PLAYERS THAT CONNECTION HAS BEEN CLOSED !!!
+        if RemoteGame.games.get(self.room_name):
+            if 'game' in RemoteGame.games[self.room_name].values():
+                task = RemoteGame.games[self.room_name]['task']
+                task.cancel()
+            del RemoteGame.games[self.room_name]
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)

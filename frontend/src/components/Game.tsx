@@ -34,17 +34,18 @@ const PingPongTable: React.FC = () => {
     if (username == undefined || username === '' || username == null)
         return ;
     const handelMouse = (e: any) => {
-        const tableDimention: any = table.current.getBoundingClientRect();
-        let posPaddle: number = ((e.y - tableDimention.top)
+        // if (isVesible) {
+            const tableDimention: any = table.current.getBoundingClientRect();
+            let posPaddle: number = ((e.y - tableDimention.top)
             / tableDimention.height) * 100;
-        (posPaddle < 10) && (posPaddle = 10);
-        (posPaddle > 90) && (posPaddle = 90);
-        myPaddle.current.style.top = `${posPaddle}%`;
-        ws.current.send(JSON.stringify({
-            type: 'update',
-            y: posPaddle
-        }));
-
+            (posPaddle < 10) && (posPaddle = 10);
+            (posPaddle > 90) && (posPaddle = 90);
+            myPaddle.current.style.top = `${posPaddle}%`;
+            ws.current.send(JSON.stringify({
+                type: 'update',
+                y: posPaddle
+            }));
+        // }
     }
 
     const handleResize = () => {
