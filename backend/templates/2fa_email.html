@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+    <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>rest password</title>
+    <style media="all" type="text/css">
+body {
+      font-family: Helvetica, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      font-size: 16px;
+      line-height: 1.3;
+      -ms-text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+   
+    }
+    
+    table {
+      border-collapse: separate;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+      width: 100%;
+    }
+    
+    table td {
+      font-family: Helvetica, sans-serif;
+      font-size: 16px;
+      vertical-align: top;
+    }
+
+    
+    body {
+      background-color: #f4f5f6;
+      margin: 0;
+      padding: 0;
+      color: rgba(133, 133, 133, 1);
+    }
+    p{
+
+      color: rgba(133, 133, 133, 1);
+    }
+
+    .body {
+      background-color: #f4f5f6;
+      width: 100%;
+    }
+    
+    .container {
+      margin: 0 auto !important;
+      max-width: 600px;
+      padding: 0;
+      padding-top: 24px;
+      width: 600px;
+    }
+    
+    .content {
+      box-sizing: border-box;
+      display: block;
+      margin: 0 auto;
+      max-width: 600px;
+      padding: 0;
+    }
+    .main {
+      background-color: #1E1E1E;
+      border-radius: 16px;
+      width: 100%;
+      margin: 10px;
+      width: fit-content;
+    }
+    
+    .wrapper {
+      box-sizing: border-box;
+      padding: 24px;
+    }
+    
+    
+    p {
+      font-family: Helvetica, sans-serif;
+      font-size: 16px;
+      font-weight: normal;
+      margin: 0;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+        
+    .btn {
+    padding: 20px;
+      box-sizing: border-box;
+       min-width: 100% !important; 
+      width: 100%;
+    
+    }
+    
+    .btn > tbody > tr > td {
+      padding-bottom: 16px;
+    }
+    
+    .btn table {
+      width: auto;
+    }
+    
+    .btn table td {
+      border-radius: 15px;
+      text-align: center;
+    }
+    
+    .code 
+    {
+        letter-spacing: 8px;
+        min-width: 150px;
+        margin: auto;
+        max-width: 200px;
+        padding: 10px 20px;
+        font-size: 24px;
+        font-weight: 1000;
+        border-radius: 10px;
+        color: white;
+        border: rgb(90, 251, 251) solid 2px;
+    }
+    h1 
+    {
+      color: #ffffff;
+    }
+        
+     
+    @media only screen and (max-width: 640px) {
+      .main p,
+      .main td,
+      .main span {
+        font-size: 16px !important;
+      }
+      .wrapper {
+        padding: 8px !important;
+      }
+      .content {
+        padding: 0 !important;
+      }
+      .container {
+        padding: 0 !important;
+        padding-top: 8px !important;
+        width: 100% !important;
+      }
+      .main {
+        border-left-width: 0 !important;
+        border-radius: 0 !important;
+        border-right-width: 0 !important;
+      }
+      .btn table {
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+    }
+    
+    @media all {
+      .ExternalClass {
+        width: 100%;
+      }
+      .ExternalClass,
+      .ExternalClass p,
+      .ExternalClass span,
+      .ExternalClass font,
+      .ExternalClass td,
+      .ExternalClass div {
+        line-height: 100%;
+      }
+      .apple-link a {
+        color: inherit !important;
+        font-family: inherit !important;
+        font-size: inherit !important;
+        font-weight: inherit !important;
+        line-height: inherit !important;
+        text-decoration: none !important;
+      }
+      #MessageViewBody a {
+        color: inherit;
+        text-decoration: none;
+        font-size: inherit;
+        font-family: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+      }
+    }
+    </style>
+  </head>
+  <body>
+ 
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+      <tr>
+        <td>&nbsp;</td>
+        <td class="container">
+          <div class="content">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="main">
+              <tr>
+                <td class="wrapper">
+                  <center><h1>Confirmation Code</h1></center> 
+                  <p>Your confirmation code is below, use it to pass the two factor authentication step</p>
+                  <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+                    <tbody>
+                      <tr>
+                        <td align="center" >
+                          <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                            <tbody>
+                              <tr>
+                               <center><td> <p class="code">{{otp}}</p> </td></center> 
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+              </table>
+            </div>
+        </td>
+        <td>&nbsp;</td>
+      </tr>
+    </table>
+  </body>

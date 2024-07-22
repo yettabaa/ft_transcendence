@@ -1,0 +1,31 @@
+/*
+
+From font
+---------
+
+api/authorize/callback
+
+POST
+
+{
+    "data": {
+        "code": asfafasf
+    },
+    "refer": url
+}
+
+If already user
+201 Created
+{
+    jwt: {}
+    isUser: true
+}
+
+If not
+201 Created
+{
+    jwt: {},
+    isUser: false
+}
+
+*/
