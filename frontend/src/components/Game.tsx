@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { BrowserRouter as Router, Route, Routes, useParams } from 'react-router-dom';
+import { Link, useNavigate } from "react-router-dom";
 
 interface Position {
     x: number;
@@ -30,9 +31,11 @@ const PingPongTable: React.FC = () => {
     const [ballSize, setBallSize] = useState<number>(0);
     const { username } = useParams<{ username: string }>();
     const { game_id } = useParams<{ game_id: string }>();
+    const navigate = useNavigate();
 
     if (username == undefined || username === '' || username == null)
         return ;
+    
     const handelMouse = (e: any) => {
         // if (isVesible) {
             const tableDimention: any = table.current.getBoundingClientRect();
@@ -58,28 +61,26 @@ const PingPongTable: React.FC = () => {
 
     useEffect(() => {
         console.log(username)
-        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/${game_id}/`);
+        if (game_id == undefined)
+            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/random`);
+        else
+            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/${game_id}`);
 
         ws.current.onopen = () => { console.log('WebSocket connection established'); };
 
         ws.current.onmessage = (event: any) => {
             const data = JSON.parse(event.data);
-            // console.log(data)
-            if (data.type == 'ball') {
-                ball.current.style.top = `${data.y}%`;
-                ball.current.style.left = `${data.x}%`;
-            }
-            if (data.type == 'score') {
-                rightScore.current.innerText = data.right;
-                leftScore.current.innerText = data.left;
-            }
-            else if (data.type == 'paddle') {
-                paddle.current.style.top = `${data.pos}%`
-            }
-            else if(data.type == 'opponents') {
+            if (data.type == 'end') {
                 console.log(data)
-            }
-            else if (data.type == 'init_paddle') {
+            }else if (data.type == 'end' && data.status == 'disconnect') {
+                // console.log(data)
+                navigate('/login')
+            } else if(data.type == 'opponents') {
+                console.log(data)
+                ws.current.send(JSON.stringify({
+                    type: 'start',
+                }));
+            } else if (data.type == 'init_paddle') {
                 setIsVesible(true)
                 setPositions((prevPositions) => ({
                     ...prevPositions,
@@ -92,6 +93,17 @@ const PingPongTable: React.FC = () => {
                         x: data.side,
                     },
                 }))
+            }
+            if (data.type == 'ball') {
+                ball.current.style.top = `${data.y}%`;
+                ball.current.style.left = `${data.x}%`;
+            }
+            if (data.type == 'score') {
+                rightScore.current.innerText = data.right;
+                leftScore.current.innerText = data.left;
+            }
+            if (data.type == 'paddle') {
+                paddle.current.style.top = `${data.pos}%`
             }
         };
 
@@ -116,19 +128,13 @@ const PingPongTable: React.FC = () => {
         };
     }, []);
 
-    const handelButton = () => {
-        ws.current.send(JSON.stringify({
-            type: 'start',
-        }));
-    }
-
     return (
         <div className="bg-bg h-[100vh] flex flex-col gap-8 justify-center items-center">
             <div className="h-[10%] flex flex-row justify-center items-center">
                 <div ref={leftScore} className="p-[0.5rem] border-r"> 0 </div>
                 <div ref={rightScore} className="p-[0.5rem] " > 0 </div>
             </div>
-            <div className="relative flex flex-row bg-green-700 w-[60vw] h-[40vw] rounded-md self-center overflow-hidden"
+            <div className="relative flex flex-row bg-green-700 w-[64vw] h-[40vw] rounded-md self-center overflow-hidden"
                 ref={table} >
                 {isVesible && (
                     <>
@@ -148,11 +154,6 @@ const PingPongTable: React.FC = () => {
                             width: `${ballSize}px`, height: `${ballSize}px` }}
                 />
             </div>
-            <button className=" bg-blue-500 w-[10rem] py-2 px-4 rounded"
-                onClick={handelButton}
-            >
-                start
-            </button>
         </div>
     );
 };

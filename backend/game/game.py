@@ -7,7 +7,7 @@ import time
 class Ball:
     # height = 1.5 * width ()
     reduisWidth = 3 / 2
-    reduisHeight = 1.5 * reduisWidth
+    reduisHeight = 1.6 * reduisWidth
     def __init__(self, firstDir) -> None:
         self.reset(firstDir)
 
@@ -43,7 +43,19 @@ class Paddle:
         }
         self.myPos += 1
         await self.socket.send(text_data=json.dumps(data))
-    
+
+    async def end_game(self, status):
+        if status == 'equal':
+            xp = 90
+        else:
+            xp = 180 if status == 'win' else 0
+        data = {
+            'type':'end',
+            'status':status,
+            'xp': xp
+        }
+        await self.socket.send(text_data=json.dumps(data))
+
     def collision(self, ball):
         dx = abs(ball.x - self.myPos)
         dy = abs(ball.y - self.socket.paddlePos)
@@ -95,7 +107,8 @@ class Game:
             await self.leftPaddle.init_paddel()
             await self.rightpaddle.init_paddel()
             previous_time = time.time()
-            while self.rightScore < 5 and self.leftScore < 5:
+            # while True:
+            while self.rightScore < 10 and self.leftScore < 10:
                 data = {
                     'type': 'ball',
                     'x': self.ball.x,
@@ -112,8 +125,17 @@ class Game:
                 self.paddles_collision()
                 await asyncio.sleep(0.029)
             data = {
-                'type':'end',
+	        'type':'end',
+	        'status':'disconnect',
+	        'xp':'.....',
             }
             await self.socket.send_update(data)
+            # if self.rightScore == self.leftScore:
+            #     await self.rightpaddle.end_game('equal')
+            #     await self.leftPaddle.end_game('equal')
+            # else:
+            # await self.rightpaddle.end_game('win' if self.rightScore > self.leftScore else 'lose')
+            # return
+                # await self.leftPaddle.end_game('win' if self.leftScore > self.rightScore else 'lose')
         except asyncio.CancelledError:
             pass
