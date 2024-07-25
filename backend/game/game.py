@@ -108,7 +108,7 @@ class Game:
             await self.rightpaddle.init_paddel()
             previous_time = time.time()
             # while True:
-            while self.rightScore < 10 and self.leftScore < 10:
+            while self.rightScore < 2 and self.leftScore < 2:
                 data = {
                     'type': 'ball',
                     'x': self.ball.x,
@@ -124,18 +124,11 @@ class Game:
                 await self.edges_collision()
                 self.paddles_collision()
                 await asyncio.sleep(0.029)
-            data = {
-	        'type':'end',
-	        'status':'disconnect',
-	        'xp':'.....',
-            }
-            await self.socket.send_update(data)
-            # if self.rightScore == self.leftScore:
-            #     await self.rightpaddle.end_game('equal')
-            #     await self.leftPaddle.end_game('equal')
-            # else:
-            # await self.rightpaddle.end_game('win' if self.rightScore > self.leftScore else 'lose')
-            # return
-                # await self.leftPaddle.end_game('win' if self.leftScore > self.rightScore else 'lose')
+            if self.rightScore == self.leftScore:
+                await self.rightpaddle.end_game('equal')
+                await self.leftPaddle.end_game('equal')
+            else:
+                await self.rightpaddle.end_game('win' if self.rightScore > self.leftScore else 'lose')
+                await self.leftPaddle.end_game('win' if self.leftScore > self.rightScore else 'lose')
         except asyncio.CancelledError:
             pass

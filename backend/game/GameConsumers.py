@@ -23,7 +23,7 @@ class RemoteGame(AsyncWebsocketConsumer):
         }
         await self.send_update(data)
         if RemoteGame.games.get(self.room_name):
-            if 'game' in RemoteGame.games[self.room_name].values():
+            if 'task' in RemoteGame.games[self.room_name]:
                 task = RemoteGame.games[self.room_name]['task']
                 task.cancel()
             del RemoteGame.games[self.room_name]
@@ -36,11 +36,13 @@ class RemoteGame(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         type = text_data_json['type']
-        if type == 'start':
-            asyncio.create_task(RemoteGame.games[self.room_name]['game'].runMatch())
-        if type == 'update':
+        if type == 'start' :
+            if RemoteGame.games.get(self.room_name) and 'task' not in RemoteGame.games[self.room_name]:
+                game = RemoteGame.games[self.room_name]['game']
+                RemoteGame.games[self.room_name]['task'] = asyncio.create_task(game.runMatch())
+        elif type == 'update':
             self.paddlePos = float(text_data_json['y'])
-            if 'game' in RemoteGame.games[self.room_name]:
+            if RemoteGame.games.get(self.room_name) and 'game' in RemoteGame.games[self.room_name]:
                 game = RemoteGame.games[self.room_name]['game']
                 game.paddlePos = self.paddlePos
                 data = {'type': 'paddle', 'pos': self.paddlePos}

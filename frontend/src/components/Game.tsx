@@ -70,7 +70,7 @@ const PingPongTable: React.FC = () => {
 
         ws.current.onmessage = (event: any) => {
             const data = JSON.parse(event.data);
-            if (data.type == 'end') {
+            if (data.type == 'end'&& data.status != 'disconnect') {
                 console.log(data)
             }else if (data.type == 'end' && data.status == 'disconnect') {
                 // console.log(data)
