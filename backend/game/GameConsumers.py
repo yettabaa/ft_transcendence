@@ -4,29 +4,53 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from .game import Game
 import uuid
 
+USERNAME1 = 'username1'
+USERNAME2 = 'username2'
+GAME = 'game'
+TASK = 'task'
+RUNNING = 'running'
+END = 'end'
+LEFT = 'left'
+RIGHT = 'right'
+WIN = 'win'
+LOSE = 'lose'
+TYPE = 'type'
+STATUS = 'status'
+XP = 'xp' 
+EQUAL = 'equal'
+
 class RemoteGame(AsyncWebsocketConsumer):
     games = {}
     async def connect(self):
         self.username = self.scope['url_route']['kwargs']['username']
         self.game_id = self.scope['url_route']['kwargs']['game_id']
         # print(f"room_name {self.game_id}")
+        panding_game = self.search_panding_game(self.username)
+        if panding_game:
+            self.room_name = panding_game
+            await self.accept()
+            await self.send(text_data=json.dumps({
+                TYPE:END, STATUS:LOSE, XP:0
+            }))
+            del RemoteGame.games[self.room_name]
+            return
+
         if self.game_id == 'random':
             return await self.random_matchmaking()
         await self.invitation()
 
     async def disconnect(self, close_code):
         # print(f'{self.username} disconnect')
-        data = {
-	        'type':'end',
-	        'status':'disconnect',
-	        'xp':'.....',
-        }
-        await self.send_update(data)
         if RemoteGame.games.get(self.room_name):
-            if 'task' in RemoteGame.games[self.room_name]:
-                task = RemoteGame.games[self.room_name]['task']
+            if TASK in RemoteGame.games[self.room_name]:
+                task = RemoteGame.games[self.room_name][TASK]
                 task.cancel()
-            del RemoteGame.games[self.room_name]
+                game = RemoteGame.games[self.room_name][GAME] 
+                if game.stats == RUNNING:
+                    data = {TYPE:END, STATUS:WIN, XP:180}
+                    await self.send_update(data, self.username)
+                if game.stats == END:
+                    del RemoteGame.games[self.room_name]
         await self.channel_layer.group_discard( # type: ignore
             self.room_name,
             self.channel_name
@@ -35,17 +59,16 @@ class RemoteGame(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        type = text_data_json['type']
-        if type == 'start' :
-            if RemoteGame.games.get(self.room_name) and 'task' not in RemoteGame.games[self.room_name]:
-                game = RemoteGame.games[self.room_name]['game']
-                RemoteGame.games[self.room_name]['task'] = asyncio.create_task(game.runMatch())
-        elif type == 'update':
-            self.paddlePos = float(text_data_json['y'])
-            if RemoteGame.games.get(self.room_name) and 'game' in RemoteGame.games[self.room_name]:
-                game = RemoteGame.games[self.room_name]['game']
+        type = text_data_json[TYPE]
+        if RemoteGame.games.get(self.room_name):
+            if type == 'start' and TASK not in RemoteGame.games[self.room_name]:
+                game = RemoteGame.games[self.room_name][GAME]
+                RemoteGame.games[self.room_name][TASK] = asyncio.create_task(game.runMatch())
+            elif type == 'update' and GAME in RemoteGame.games[self.room_name]:
+                self.paddlePos = float(text_data_json['y'])
+                game = RemoteGame.games[self.room_name][GAME]
                 game.paddlePos = self.paddlePos
-                data = {'type': 'paddle', 'pos': self.paddlePos}
+                data = {TYPE: 'paddle', 'pos': self.paddlePos}
                 await self.send_update(data, self.username)
 
     async def connect_socket(self):
@@ -61,7 +84,7 @@ class RemoteGame(AsyncWebsocketConsumer):
         await self.channel_layer.group_send( # type: ignore
             self.room_name,
             {
-                'type': 'game.update',
+                TYPE: 'game.update',
                 'data': data,
                 'sender_channel': sender
             }
@@ -79,20 +102,20 @@ class RemoteGame(AsyncWebsocketConsumer):
             # print(f'user1 {self.username} connect')
             self.room_name = 'random_' + str(uuid.uuid4())
             RemoteGame.games[self.room_name] = {
-                'username1': self.username,
-                'username2': self,
+                USERNAME1: self.username,
+                USERNAME2: self,
             }
             return await self.connect_socket()
         # print(f'user2 {self.username} connect')
         room = RemoteGame.games[list(waiting_room)[0]]
-        socket1 = room['username2']
+        socket1 = room[USERNAME2]
         self.room_name = socket1.room_name
         game = Game(socket1, self)
-        room['username2'] = self.username
-        room['game'] = game
+        room[USERNAME2] = self.username
+        room[GAME] = game
         data={
-            'type':'opponents',
-            'user1':room['username1'],
+            TYPE:'opponents',
+            'user1':room[USERNAME1],
             'user2':self.username,
         }
         await self.connect_socket()
@@ -103,19 +126,19 @@ class RemoteGame(AsyncWebsocketConsumer):
         if self.room_name not in RemoteGame.games:
             # print(f'user1 {self.username} connect')
             RemoteGame.games[self.room_name] = {
-                'username1': self.username,
-                'username2': self,
+                USERNAME1: self.username,
+                USERNAME2: self,
             }
             return await self.connect_socket()
         # print(f'user2 {self.username} connect')
         room = RemoteGame.games[self.room_name]
-        socket1 = room['username2']
+        socket1 = room[USERNAME2]
         game = Game(socket1, self)
-        room['username2'] = self.username
-        room['game'] = game
+        room[USERNAME2] = self.username
+        room[GAME] = game
         data={
-            'type':'opponents',
-            'user1':room['username1'],
+            TYPE:'opponents',
+            'user1':room[USERNAME1],
             'user2':self.username,
         }
         await self.connect_socket()
@@ -126,3 +149,15 @@ class RemoteGame(AsyncWebsocketConsumer):
             key for key, value in RemoteGame.games.items() 
             if len(value) == 2 and key[:7] == 'random_'
         }
+    
+    def search_panding_game(self, username):
+        panding = {key:value for key, value in RemoteGame.games.items() 
+            if (USERNAME1 in value and value[USERNAME1] == username )
+            or (USERNAME2 in value and value[USERNAME2] == username )
+        }
+        if not panding:
+            return {}
+        key = list(panding)[0]
+        value =  panding[key]
+        return key if TASK in value else None
+         
