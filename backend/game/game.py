@@ -106,7 +106,7 @@ class Game:
         if self.leftPaddle.collision(self.ball):
             self.ball.xOrt *= -1 if self.ball.xOrt < 0 else 1
 
-    async def broadcast_result(self):
+    async def broadcast_result(self): #move to GameConsumers
         if self.rightScore == self.leftScore:
             data = {TYPE:END, STATUS:EQUAL,XP: 90}
             await self.broadcast(data)

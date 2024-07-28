@@ -18,6 +18,8 @@ TYPE = 'type'
 STATUS = 'status'
 XP = 'xp' 
 EQUAL = 'equal'
+DISCONNECT = 'disconnect'
+
 
 class RemoteGame(AsyncWebsocketConsumer):
     games = {}
@@ -30,7 +32,7 @@ class RemoteGame(AsyncWebsocketConsumer):
             self.room_name = panding_game
             await self.accept()
             await self.send(text_data=json.dumps({
-                TYPE:END, STATUS:LOSE, XP:0
+                TYPE:DISCONNECT, STATUS:LOSE, XP:0
             }))
             del RemoteGame.games[self.room_name]
             return
@@ -43,11 +45,10 @@ class RemoteGame(AsyncWebsocketConsumer):
         # print(f'{self.username} disconnect')
         if RemoteGame.games.get(self.room_name):
             if TASK in RemoteGame.games[self.room_name]:
-                task = RemoteGame.games[self.room_name][TASK]
-                task.cancel()
+                RemoteGame.games[self.room_name][TASK].cancel()
                 game = RemoteGame.games[self.room_name][GAME] 
                 if game.stats == RUNNING:
-                    data = {TYPE:END, STATUS:WIN, XP:180}
+                    data = {TYPE:DISCONNECT, STATUS:WIN, XP:180}
                     await self.send_update(data, self.username)
                 if game.stats == END:
                     del RemoteGame.games[self.room_name]
@@ -70,6 +71,12 @@ class RemoteGame(AsyncWebsocketConsumer):
                 game.paddlePos = self.paddlePos
                 data = {TYPE: 'paddle', 'pos': self.paddlePos}
                 await self.send_update(data, self.username)
+            elif type == 'end':
+                RemoteGame.games[self.room_name][TASK].cancel()
+                game = RemoteGame.games[self.room_name][GAME]
+                game.stats = END
+                game.broadcast_result()
+
 
     async def connect_socket(self):
         await self.channel_layer.group_add( # type: ignore
