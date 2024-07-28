@@ -106,7 +106,7 @@ class Game:
         if self.leftPaddle.collision(self.ball):
             self.ball.xOrt *= -1 if self.ball.xOrt < 0 else 1
 
-    async def broadcast_result(self): #move to GameConsumers
+    async def broadcast_result(self): # move to GameConsumers
         if self.rightScore == self.leftScore:
             data = {TYPE:END, STATUS:EQUAL,XP: 90}
             await self.broadcast(data)
@@ -125,8 +125,8 @@ class Game:
             await self.leftPaddle.init_paddel()
             await self.rightpaddle.init_paddel()
             previous_time = time.time()
-            # while True:
             self.stats = RUNNING
+            # while True:
             while self.rightScore < 2 and self.leftScore < 2:
                 await asyncio.sleep(0.029)
                 data = {

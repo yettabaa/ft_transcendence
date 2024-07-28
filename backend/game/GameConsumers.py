@@ -71,12 +71,12 @@ class RemoteGame(AsyncWebsocketConsumer):
                 game.paddlePos = self.paddlePos
                 data = {TYPE: 'paddle', 'pos': self.paddlePos}
                 await self.send_update(data, self.username)
-            elif type == 'end':
+            elif type == 'end' and TASK in RemoteGame.games[self.room_name]:
                 RemoteGame.games[self.room_name][TASK].cancel()
+                del RemoteGame.games[self.room_name][TASK]
                 game = RemoteGame.games[self.room_name][GAME]
                 game.stats = END
-                game.broadcast_result()
-
+                await game.broadcast_result()
 
     async def connect_socket(self):
         await self.channel_layer.group_add( # type: ignore
@@ -167,4 +167,15 @@ class RemoteGame(AsyncWebsocketConsumer):
         key = list(panding)[0]
         value =  panding[key]
         return key if TASK in value else None
-         
+
+
+class RemoteTournament(AsyncWebsocketConsumer):
+    games = {}
+    async def connect(self):
+        pass
+    
+    async def disconnect(self, code):
+        pass
+    
+    async def receive(self, text_data):
+        pass
