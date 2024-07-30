@@ -60,9 +60,8 @@ const PingPongTable: React.FC = () => {
     }
 
     useEffect(() => {
-        console.log(username)
-        if (game_id == undefined)
-            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/random`);
+        if (game_id == 'tournament')
+            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game_tournament/${username}`);
         else
             ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/${game_id}`);
 
@@ -70,10 +69,10 @@ const PingPongTable: React.FC = () => {
 
         ws.current.onmessage = (event: any) => {
             const data = JSON.parse(event.data);
-            if (data.type == 'end') {
+            if (data.type == 'disconnect') {
                 console.log(data)
-            } else if (data.type == 'end' && data.status == 'disconnect') {
-                // console.log(data)
+            } else if (data.type == 'end') {
+                console.log(data)
                 navigate('/login')
             } else if(data.type == 'opponents') {
                 console.log(data)

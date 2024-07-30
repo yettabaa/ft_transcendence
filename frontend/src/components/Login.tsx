@@ -11,6 +11,9 @@ const Login: React.FC = () => {
     const handelButton = () => {
         navigate(`/game/${name}/${id}`)
     }
+    const handeltournament = () => {
+        navigate(`/game/${name}/tournament`)
+    }
     return (
         <div className="flex flex-col gap-[2rem] justify-center items-center h-screen bg-bg">
             <input className='bg-slate-500' 
@@ -25,6 +28,11 @@ const Login: React.FC = () => {
             onClick={handelrandom}
             >
                 random
+            </button>
+            <button className=" bg-blue-500 w-[10rem] py-2 px-4 rounded"
+            onClick={handeltournament}
+            >
+                tournament
             </button>
             <button className=" bg-blue-500 w-[10rem] py-2 px-4 rounded"
             onClick={handelButton}
