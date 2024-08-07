@@ -69,17 +69,31 @@ const PingPongTable: React.FC = () => {
 
         ws.current.onmessage = (event: any) => {
             const data = JSON.parse(event.data);
+            // console.log(data)
             if (data.type == 'disconnect') {
                 console.log(data)
-            } else if (data.type == 'end') {
+            }  if (data.type == 'end') {
                 console.log(data)
-                navigate('/login')
-            } else if(data.type == 'opponents') {
+                if (data.status == 'im the winer')
+                   navigate('/login')
+                else if (data.status == 'win') {
+
+                    ws.current.send(JSON.stringify({
+                        type: 'qualifyboard',
+                    }));
+                    ws.current.send(JSON.stringify({
+                        type: 'start_next',
+                    }));
+                }
+
+            }  if (data.type == 'waiting') {
+                console.log(data)
+            }  if(data.type == 'opponents') {
                 console.log(data)
                 ws.current.send(JSON.stringify({
                     type: 'start',
                 }));
-            } else if (data.type == 'init_paddle') {
+            }  if (data.type == 'init_paddle') {
                 setIsVesible(true)
                 setPositions((prevPositions) => ({
                     ...prevPositions,

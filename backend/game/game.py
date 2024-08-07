@@ -8,12 +8,15 @@ LEFT = 'left'
 RIGHT = 'right'
 WIN = 'win'
 LOSE = 'lose'
+INITIALIZED = 'initialized'
 RUNNING = 'running'
 END = 'end'
 TYPE = 'type'
 STATUS = 'status'
 XP = 'xp' 
 EQUAL = 'equal'
+QUALIFIED = 'qualified'
+ELIMINATED = 'eliminated'
  
 class Ball:
     # height = 1.5 * width ()
@@ -73,7 +76,8 @@ class Game:
         self.rightPlayer = socket1
         self.leftPlayer = socket2
         self.speed = Game.speedBall
-        self.stats = True
+        self.stats = INITIALIZED
+        self.id = 0
     
     async def broadcast(self, data):
         await self.rightPlayer.send(text_data=json.dumps(data))
@@ -106,44 +110,57 @@ class Game:
         if self.leftPaddle.collision(self.ball):
             self.ball.xOrt *= -1 if self.ball.xOrt < 0 else 1
 
-    async def broadcast_result(self): # move to GameConsumers
-        if self.rightScore == self.leftScore:
-            data = {TYPE:END, STATUS:EQUAL,XP: 90}
+    async def game(self, goals):
+        await self.leftPaddle.init_paddel()
+        await self.rightpaddle.init_paddel()
+        await self.broadcast({ TYPE: 'score', RIGHT: 0, LEFT: 0})
+        previous_time = time.time()
+        self.stats = RUNNING
+        # while True:
+        while self.rightScore < goals and self.leftScore < goals:
+            await asyncio.sleep(0.029)
+            data = {
+                TYPE: 'ball',
+                'x': self.ball.x,
+                'y': self.ball.y,
+            }
             await self.broadcast(data)
-            return
-        status = WIN if self.rightScore > self.leftScore else LOSE
-        xp = 180 if status == WIN else 0
-        data = {TYPE:END, STATUS:status,XP: xp}
-        await self.rightPlayer.send(text_data=json.dumps(data))
-        status = WIN if self.leftScore > self.rightScore else LOSE
-        xp = 180 if status == WIN else 0
-        data = {TYPE:END, STATUS:status,XP: xp}
-        await self.leftPlayer.send(text_data=json.dumps(data))
+            current_time = time.time()
+            delta_time = current_time - previous_time
+            previous_time = current_time
+            self.speed += Game.acceleration        
+            self.ball.x += self.ball.xOrt * self.speed * delta_time
+            self.ball.y += self.ball.yOrt * self.speed * delta_time
+            await self.edges_collision()
+            self.paddles_collision()
+        self.stats = END
 
-    async def runMatch(self):
+    async def run_game(self, goals):
         try:
-            await self.leftPaddle.init_paddel()
-            await self.rightpaddle.init_paddel()
-            previous_time = time.time()
-            self.stats = RUNNING
-            # while True:
-            while self.rightScore < 2 and self.leftScore < 2:
-                await asyncio.sleep(0.029)
-                data = {
-                    TYPE: 'ball',
-                    'x': self.ball.x,
-                    'y': self.ball.y,
-                }
+            await self.game(goals)
+            if self.rightScore == self.leftScore:
+                data = {TYPE:END, STATUS:EQUAL,XP: 90}
                 await self.broadcast(data)
-                current_time = time.time()
-                delta_time = current_time - previous_time
-                previous_time = current_time
-                self.speed += Game.acceleration        
-                self.ball.x += self.ball.xOrt * self.speed * delta_time
-                self.ball.y += self.ball.yOrt * self.speed * delta_time
-                await self.edges_collision()
-                self.paddles_collision()
-            self.stats = END
-            await self.broadcast_result()
+                return
+            status = WIN if self.rightScore > self.leftScore else LOSE
+            xp = 180 if status == WIN else 0
+            data = {TYPE:END, STATUS:status,XP: xp}
+            await self.rightPlayer.send(text_data=json.dumps(data))
+            status = WIN if self.leftScore > self.rightScore else LOSE
+            xp = 180 if status == WIN else 0
+            data = {TYPE:END, STATUS:status,XP: xp}
+            await self.leftPlayer.send(text_data=json.dumps(data))
+        except asyncio.CancelledError:
+            pass
+
+    async def run_game_tournament(self, goals):
+        try:
+            await self.game(goals)
+            status = QUALIFIED if self.rightScore > self.leftScore else ELIMINATED
+            data = {TYPE:END, STATUS:status}
+            await self.rightPlayer.send(text_data=json.dumps(data))
+            status = QUALIFIED if self.leftScore > self.rightScore else ELIMINATED
+            data = {TYPE:END, STATUS:status}
+            await self.leftPlayer.send(text_data=json.dumps(data))
         except asyncio.CancelledError:
             pass
