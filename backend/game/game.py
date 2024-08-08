@@ -76,7 +76,7 @@ class Game:
         self.rightPlayer = socket1
         self.leftPlayer = socket2
         self.speed = Game.speedBall
-        self.stats = INITIALIZED
+        self.state = INITIALIZED
         self.id = 0
     
     async def broadcast(self, data):
@@ -115,7 +115,7 @@ class Game:
         await self.rightpaddle.init_paddel()
         await self.broadcast({ TYPE: 'score', RIGHT: 0, LEFT: 0})
         previous_time = time.time()
-        self.stats = RUNNING
+        self.state = RUNNING
         # while True:
         while self.rightScore < goals and self.leftScore < goals:
             await asyncio.sleep(0.029)
@@ -133,7 +133,7 @@ class Game:
             self.ball.y += self.ball.yOrt * self.speed * delta_time
             await self.edges_collision()
             self.paddles_collision()
-        self.stats = END
+        self.state = END
 
     async def run_game(self, goals):
         try:
@@ -157,9 +157,13 @@ class Game:
         try:
             await self.game(goals)
             status = QUALIFIED if self.rightScore > self.leftScore else ELIMINATED
+            self.rightPlayer.state = status
+            self.rightPlayer.id = math.ceil(self.rightPlayer.id / 2) if status == QUALIFIED else -1
             data = {TYPE:END, STATUS:status}
             await self.rightPlayer.send(text_data=json.dumps(data))
             status = QUALIFIED if self.leftScore > self.rightScore else ELIMINATED
+            self.leftPlayer.state = status
+            self.leftPlayer.id = math.ceil(self.leftPlayer.id / 2) if status == QUALIFIED else -1
             data = {TYPE:END, STATUS:status}
             await self.leftPlayer.send(text_data=json.dumps(data))
         except asyncio.CancelledError:

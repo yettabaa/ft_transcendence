@@ -47,7 +47,7 @@ const GameTournament: React.FC = () => {
         }));
     }
 
-   
+
     const handleResize = () => {
         console.log('heeere')
         if (table.current) {
@@ -58,7 +58,7 @@ const GameTournament: React.FC = () => {
         }
     }
     const [data, setData] = useState<any>(null);
-    const [ingame, setIngame] = useState<boolean>(true)
+    const [ingame, setIngame] = useState<boolean>(false)
 
     useEffect(() => {
         ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game_tournament/${username}`);
@@ -68,17 +68,20 @@ const GameTournament: React.FC = () => {
             const jsondata = JSON.parse(event.data);
             if (jsondata.type == 'disconnect') {
                 console.log(jsondata)
+            }if (jsondata.type == 'zab') {
+                ws.current.send(JSON.stringify({
+                    type: 'kikab',
+                }));
             } if (jsondata.type == 'end') {
                 console.log(jsondata)
                 setIngame(false)
-                // if (jsondata.status == 'im the winer' || jsondata.status == 'eliminated')
-
-                //     navigate('/login')
-                if (jsondata.status == 'qualified') {
-                    ws.current.send(JSON.stringify({
-                        type: 'qualifyboard',
-                    }));
-                }
+                if (jsondata.status == 'im the winer')
+                    return
+                ws.current.send(JSON.stringify({
+                    type: 'qualifyboard',
+                }));
+                // if (jsondata.status == 'qualified') {
+                // }
             } if (jsondata.type == 'opponents') {
                 // handleResize()
                 ws.current.send(JSON.stringify({
@@ -86,9 +89,8 @@ const GameTournament: React.FC = () => {
                 }));
                 console.log(jsondata)
             } if (jsondata.type == 'dashboard') {
-                setIngame(false)
-                setData(jsondata)
-                console.log(jsondata)
+                setData(jsondata.rounds)
+                console.log(jsondata.rounds[0])
             } if (jsondata.type == 'waiting') {
                 console.log(jsondata)
             } if (jsondata.type == 'init_paddle') {
@@ -104,7 +106,7 @@ const GameTournament: React.FC = () => {
                         ...prevPositions.paddle2,
                         x: jsondata.side,
                     },
-                    
+
                 }))
             }
             if (jsondata.type == 'ball') {
@@ -120,7 +122,7 @@ const GameTournament: React.FC = () => {
                 paddle.current.style.top = `${jsondata.pos}%`
             }
         };
-        
+
         ws.current.onclose = (event: any) => {
             if (event.wasClean) {
                 console.log(`Connection closed cleanly, code=${event.code} reason=${event.reason}`);
@@ -128,10 +130,10 @@ const GameTournament: React.FC = () => {
                 console.error('WebSocket connection died');
             }
         };
-        
+
         ws.current.onerror = (error: any) => { console.error(`WebSocket error: ${error.message}`); };
         handleResize()
-        
+
         window.addEventListener('mousemove', handelMouse);
         window.addEventListener('resize', handleResize);
         return () => {
@@ -163,7 +165,7 @@ const GameTournament: React.FC = () => {
                         <div ref={ball}
                             className="absolute top-[50%] left-[50%] bg-white rounded-full translate-y-[-50%] translate-x-[-50%]"
                             style={{
-                              
+
                                 width: `${ballSize}px`, height: `${ballSize}px`
                             }}
                         />
@@ -171,39 +173,17 @@ const GameTournament: React.FC = () => {
                 </>
             )}
             {!ingame && (
-                <div className="p-4 bg-gray-100">
-                    {data && (
-                        <div className="bg-white p-6 rounded shadow-md">
-                            <div className="mb-4">
-                                <h2 className="text-gray-950 text-xl font-bold mb-2">First Round</h2>
-                                <div className="p-4 bg-gray-50 rounded">
-                                    {Object.entries(data['firstround']).map(([username, value]) => (
-                                        <p className="text-gray-700" key={username}>{username}: {value}</p>
-                                    ))}
-                                </div>
+                <div className="bg-gray-100 mb-4 tournament-bracket">
+                    {data && (data.map((round, roundIndex) => (
+                        <div key={roundIndex} className="round p-4">
+                            <h2 className="text-gray-950 text-xl font-bold mb-2 round-title">Round {roundIndex + 1}</h2>
+                            <div className="p-4 bg-gray-50 rounded">
+                                {Object.entries(round).map(([username, value]) => (
+                                    <p className="text-gray-700 username" key={username}>{username}: {value}</p>
+                                ))}
                             </div>
-                            {data['semi-final'] && (
-                                <div className="mb-4">
-                                    <h2 className="text-gray-950 text-xl font-bold mb-2">Semi-Final</h2>
-                                    <div className="p-4 bg-gray-50 rounded">
-                                        {Object.entries(data.semi_final).map(([username, value]) => (
-                                            <p className="text-gray-700" key={username}>{username}: {value}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            {data['final'] && (
-                                <div className="mb-4">
-                                    <h2 className="text-gray-950 text-xl font-bold mb-2">Final</h2>
-                                    <div className="p-4 bg-gray-50 rounded">
-                                        {Object.entries(data.final).map(([username, value]) => (
-                                            <p className="text-gray-700" key={username}>{username}: {value}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
-                    )}
+                    )))}
                 </div>
             )}
         </div>
