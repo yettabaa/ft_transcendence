@@ -178,79 +178,77 @@ class RemoteGame(AsyncWebsocketConsumer):
 
 NBPLAYER = 8
 TOURNAMENT = 'tournament'
-FIRSTROUND = 1
-SEMIFINAL =  2
-FINAL = 3
+FIRSTROUND = 0
+SEMIFINAL =  1
+FINAL = 2
 COMPETITORS = 'competitors'
 QUALIFYBOARD ='qualifyboard'
 QUALIFIED = 'qualified'
 ELIMINATED = 'eliminated'
+SOCKET = 'socket'
+USERNAME = 'username'
+ROUND = 'round'
+TYPE = 'type'
 
 class RemoteTournament(AsyncWebsocketConsumer):
     games = {}
     coroutines_lock = asyncio.Lock()
     async def connect(self):
-            self.username = self.scope['url_route']['kwargs']['username']
-            pending_tournament = self.search_pending_tournament()
-            if not pending_tournament:
-                self.group_name = 'tournament_' + str(uuid.uuid4())
-                self.id = 1
-                async with RemoteTournament.coroutines_lock:
-                    RemoteTournament.games[self.group_name] = {COMPETITORS:{self.username:self}}
-                    RemoteTournament.games[self.group_name][TOURNAMENT] = FIRSTROUND
-                await self.connect_socket()
-                return 
+        self.username = self.scope['url_route']['kwargs']['username']
+        self.type = int(self.scope['url_route']['kwargs']['type'])
+        if self.in_tournament():
+            await self.connect_socket()
+            return
+        pending_tournament = self.search_pending_tournament()
+        print(f'pending {pending_tournament}')
+        if not pending_tournament:
+            self.group_name = 'tournament_' + str(uuid.uuid4())
+            self.id = 1
             async with RemoteTournament.coroutines_lock:
-                competitors = RemoteTournament.games[pending_tournament][COMPETITORS]
-            if len(competitors) < NBPLAYER -1:
-                self.group_name = pending_tournament
-                async with RemoteTournament.coroutines_lock:
-                    self.id = len(competitors) + 1
-                    competitors[self.username] = self
-                await self.connect_socket()
-            else:
-                self.group_name = pending_tournament
-
-                async with RemoteTournament.coroutines_lock:
-                    self.id = len(competitors) + 1
-                    competitors[self.username] = self
-                await self.connect_socket()
-                await self.send(text_data=json.dumps({
-                    TYPE:'zab'}))
-                # for i in range(int(NBPLAYER / 2)):
-                #     # await asyncio.sleep(0.5) 
-                #     # key1 = 'user' + str(1 + i*2)
-                #     # key2 = 'user' + str(2 + i*2)
-                #     print(f"{1 + i*2} {2 + i*2}")
-                #     socket1 = self.getSocketById(1 + i*2)
-                #     socket2 = self.getSocketById(2 + i*2)
-                #     print(socket1, socket2)
-                #     print(f"round {self.round}    {socket1.username} vs {socket2.username}")
-                #     if not socket1 and not socket2:
-                #         continue
-                #     if not socket1:
-                #         data = {TYPE:DISCONNECT, STATUS:QUALIFIED}
-                #         await socket2.send(text_data=json.dumps(data))
-                #         continue
-                #     if not socket2:
-                #         data = {TYPE:DISCONNECT, STATUS:QUALIFIED}
-                #         await socket1.send(text_data=json.dumps(data))
-                #         continue
-                #     socket1.opponent_socket = socket2
-                #     socket2.opponent_socket = socket1
-                #     game = Game(socket1, socket2)
-                #     game.id = i +1
-                #     socket1.game = socket2.game = game
-                #     await game.broadcast({TYPE:OPPONENTS, 
-                #     'user1':socket1.username,'user2':socket2.username})
-        
+                RemoteTournament.games[self.group_name] = {COMPETITORS:{self.id:{SOCKET:self,
+                USERNAME:self.username, ROUND:0}}}
+                RemoteTournament.games[self.group_name][TOURNAMENT] = FIRSTROUND
+                RemoteTournament.games[self.group_name][TYPE] = self.type
+        else:
+            competitors = RemoteTournament.games[pending_tournament][COMPETITORS]
+            self.group_name = pending_tournament
+            async with RemoteTournament.coroutines_lock:
+                self.id = len(competitors) + 1
+                competitors[self.id]= {SOCKET:self,
+                USERNAME:self.username, ROUND:0}
+        await self.connect_socket()
+        if len(RemoteTournament.games[self.group_name][COMPETITORS]) == self.type:
+            for i in range(int(self.type / 2)):
+                # print(f"{1 + i*2} {2 + i*2}")
+                socket1 = competitors[1 + i*2][SOCKET]
+                socket2 = competitors[2 + i*2][SOCKET]
+                # print(socket1, socket2)
+                if not socket1 and not socket2:
+                    print('NO ONE')
+                    continue
+                if not socket1:
+                    data = {TYPE:END, STATUS:QUALIFIED}
+                    await socket2.send(text_data=json.dumps(data))
+                    continue
+                if not socket2:
+                    data = {TYPE:END, STATUS:QUALIFIED}
+                    await socket1.send(text_data=json.dumps(data))
+                    continue
+                print(f"round {self.round}    {socket1.username} vs {socket2.username}")
+                socket1.opponent_socket = socket2
+                socket2.opponent_socket = socket1
+                game = Game(socket1, socket2)
+                game.id = i +1
+                socket1.game = socket2.game = game
+                await game.broadcast({TYPE:OPPONENTS, 
+                'user1':socket1.username,'user2':socket2.username})
 
     async def disconnect(self, code):
         if self.group_name in RemoteTournament.games:
             if hasattr(RemoteTournament, 'game') and self.game.state != END:
                 data = {TYPE:DISCONNECT, STATUS:QUALIFIED}
                 await self.opponent_socket.send(text_data=json.dumps(data))
-            RemoteTournament.games[self.group_name][COMPETITORS][self.username] = None
+            RemoteTournament.games[self.group_name][COMPETITORS][self.id][SOCKET] = None
             await self.broadcast_dashboard()
         await self.close()
         await self.channel_layer.group_discard( # type: ignore
@@ -261,108 +259,113 @@ class RemoteTournament(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         type = text_data_json[TYPE]
-        if hasattr(self, 'game'):
-            if type == 'update': # after opnents
-                self.paddlePos = float(text_data_json['y'])
-                data = {TYPE: 'paddle', 'pos': self.paddlePos}
-                await self.opponent_socket.send(text_data=json.dumps(data))
-            elif type == 'start' and self.game.state == INITIALIZED:
+        if hasattr(self, 'game') and type == 'update': # after opnents
+            self.paddlePos = float(text_data_json['y'])
+            data = {TYPE: 'paddle', 'pos': self.paddlePos}
+            await self.opponent_socket.send(text_data=json.dumps(data))
+        elif type == 'start' and hasattr(self, 'game') and self.game.state == INITIALIZED:
+            print(f'{self.username} start')
+            async with RemoteTournament.coroutines_lock:
+                self.game.state = RUNNING
                 self.task = self.opponent_socket.task = asyncio.create_task(
-                    self.game.run_game_tournament(1)
-                )
-            elif type == QUALIFYBOARD:
-                if self.state == ELIMINATED or self.state == 'winer':
-                    print(f"username {self.username} eliminated")
-                    return await self.broadcast_dashboard()
-                self.round += 1
-                if (self.round == 3 and NBPLAYER == 4) or (self.round == 4 and NBPLAYER == 8):
-                    self.state = 'winer'
-                    self.round = 3 if NBPLAYER == 4 else 4
-                    await self.send(text_data=json.dumps({
-                    TYPE:END, STATUS:"im the winer" }))
-                RemoteTournament.games[self.group_name][TOURNAMENT] = self.round
-                await self.broadcast_dashboard()
-                print(f"username {self.username} id {self.id} state {self.state} round {self.round}")
-                qualify_socket = await self.qualify_game()
-                if not qualify_socket:
-                    return
-                else:
-                    print(f"round {self.round}    {qualify_socket.username} vs {self.username}")
-                    qualify_socket.opponent_socket = self
-                    self.opponent_socket = qualify_socket
-                    game = Game(qualify_socket, self)
-                    game.id = math.ceil(self.game.id / 2)
-                    self.game = qualify_socket.game = game
-                    await game.broadcast({TYPE:OPPONENTS, 
-                    'user1':qualify_socket.username,'user2':self.username})
-        if type=='kikab':
-            for i in range(int(NBPLAYER / 2)):
-                # await asyncio.sleep(0.5) 
-                # key1 = 'user' + str(1 + i*2)
-                # key2 = 'user' + str(2 + i*2)
-                print(f"{1 + i*2} {2 + i*2}")
-                socket1 = self.getSocketById(1 + i*2)
-                socket2 = self.getSocketById(2 + i*2)
-                print(socket1, socket2)
-                print(f"round {self.round}    {socket1.username} vs {socket2.username}")
-                if not socket1 and not socket2:
-                    continue
-                if not socket1:
-                    data = {TYPE:DISCONNECT, STATUS:QUALIFIED}
-                    await socket2.send(text_data=json.dumps(data))
-                    continue
-                if not socket2:
-                    data = {TYPE:DISCONNECT, STATUS:QUALIFIED}
-                    await socket1.send(text_data=json.dumps(data))
-                    continue
-                socket1.opponent_socket = socket2
-                socket2.opponent_socket = socket1
-                game = Game(socket1, socket2)
-                game.id = i +1
-                socket1.game = socket2.game = game
+                    self.game.run_game_tournament(1) )
+        elif hasattr(self, 'game')  and type == QUALIFYBOARD:
+            if self.state == ELIMINATED or self.state == 'winer':
+                print(f"in receive username {self.username} {self.state}")
+                return await self.broadcast_dashboard()
+            competitors = RemoteTournament.games[self.group_name][COMPETITORS]
+            self.round += 1
+            if (self.round == 2 and self.type == 4) or (self.round == 3 and self.type == 8):
+                self.state = 'winer'
+                self.round = 2 if self.type == 4 else 3
+                await self.send(text_data=json.dumps({
+                TYPE:END, STATUS:"im the winer" }))
+            competitors[self.id][ROUND] = self.round
+            RemoteTournament.games[self.group_name][TOURNAMENT] = self.round
+            await self.broadcast_dashboard()
+            # print(f"username {self.username} id {self.id} state {self.state} round {self.round}")
+            qualify_socket = await self.qualify_game()
+            if not qualify_socket:
+                return
+            else:
+                print(f"round {self.round}    {qualify_socket.username} vs {self.username}")
+                qualify_socket.opponent_socket = self
+                self.opponent_socket = qualify_socket
+                game = Game(qualify_socket, self)
+                game.id = math.ceil(self.game.id / 2)
+                self.game = qualify_socket.game = game
                 await game.broadcast({TYPE:OPPONENTS, 
-                'user1':socket1.username,'user2':socket2.username})
-
-    def getSocketById(self, id):
-        competitors = RemoteTournament.games[self.group_name][COMPETITORS]
-        # print(competitors)
-        for socket in competitors.values():
-            # print(socket.username)
-            if socket and socket.id == id:
-                return socket
-        return None
+                'user1':qualify_socket.username,'user2':self.username})
 
     async def qualify_game(self):
         if self.state == 'winer':
             return None
-        id_qualify_socket = self.id + (-1 if self.id % 2 == 0 else 1)
-        qualify_socket = self.getSocketById(id_qualify_socket)
-        if qualify_socket and qualify_socket.round == self.round:
-            print(f"username {self.username} id {self.id} id_qualify_socket {id_qualify_socket}")
-            return qualify_socket
-        id_ingame_socket = 2 * id_qualify_socket
-        ingame_socket1 = self.getSocketById(id_ingame_socket -1)
-        ingame_socket2 = self.getSocketById(id_ingame_socket)
-        if not ingame_socket1 and not ingame_socket2:
-            print(f"username {self.username} id {self.id} qualified forfait")
-            await self.send(text_data=json.dumps({
-                    TYPE:END, STATUS:QUALIFIED}))
+        competitors = RemoteTournament.games[self.group_name][COMPETITORS]
+        potential_nubmber = 2 * self.round
+        virtual_id = math.ceil(self.id / potential_nubmber)
+        start_id = ((virtual_id -1) *2) -1 if virtual_id % 2 == 0 else (virtual_id *potential_nubmber) +1
+        count = 0
+        print(f'in qualify_game username {self.username} roud {self.round} start {start_id}')
+        for i in range(potential_nubmber):
+            potential_id = start_id + i
+            if competitors[potential_id][SOCKET] == None:
+                count += 1
+            if self.round == competitors[potential_id][ROUND]:
+                if competitors[potential_id][SOCKET] == None:
+                    count = potential_nubmber
+                    break
+                else:
+                    return competitors[potential_id][SOCKET]
+        # if count == potential_nubmber:
+        #     await self.send(text_data=json.dumps({
+        #             TYPE:END, STATUS:QUALIFIED}))
         return None
 
+    def in_tournament(self):
+        for key,value in RemoteTournament.games.items():
+            competitors = value[COMPETITORS]
+            for subkey, subValue in competitors.items():
+                if subValue[USERNAME] == self.username:
+                    self.id = subkey
+                    self.group_name = key
+                    return True
+        return False
+
     async def broadcast_dashboard(self):
-        max = RemoteTournament.games[self.group_name][TOURNAMENT]
-        _value = RemoteTournament.games[self.group_name][COMPETITORS]
+        async with RemoteTournament.coroutines_lock:
+            max = RemoteTournament.games[self.group_name][TOURNAMENT]
+            _value = RemoteTournament.games[self.group_name][COMPETITORS]
         dashboard = []
-        for j in range(max):
+        for j in range(max +1):
+            # print(f"j {j} max {max +1}")
             dashboard.append ({ 
                 # f"username{i +1}": {key: True if value else False}
-                f"username{i +1}": key
-                for i, (key, value) in enumerate(_value.items()) #get by id
-                if not value  or (value and value.round >= j +1)
+                f"username{key}": value[USERNAME]
+                for key, value in _value.items() #get by id
+                if value[ROUND] >= j
+                
             })
         # print(_value)
         # print({TYPE:'dashboard', 'rounds':dashboard})
         await self.send_group({TYPE:'dashboard', 'rounds':dashboard})
+
+    async def connect_socket(self):
+        self.round = FIRSTROUND
+        self.state = QUALIFIED
+        await self.channel_layer.group_add( # type: ignore
+            self.group_name,
+            self.channel_name
+        )
+        await self.accept()
+        await self.broadcast_dashboard()
+
+    def search_pending_tournament(self):
+        pending = {
+            key for key, value in RemoteTournament.games.items() 
+            if TYPE in value and value[TYPE] == self.type
+            and COMPETITORS in value and len(value[COMPETITORS]) < self.type
+        }
+        return list(pending)[0] if pending else None
 
     async def send_group(self, data=None, sender=''):
         if not data:
@@ -382,21 +385,4 @@ class RemoteTournament(AsyncWebsocketConsumer):
         data = event['data']
         await self.send(text_data=json.dumps(data))
 
-    def search_pending_tournament(self):
-        pending = {
-            key for key, value in RemoteTournament.games.items() 
-            if COMPETITORS in value and len(value[COMPETITORS]) < NBPLAYER
-        }
-        return list(pending)[0] if pending else None
-
-    async def connect_socket(self):
-        self.Eliminations = 2 if NBPLAYER == 8 else 1
-        self.round = FIRSTROUND
-        self.state = QUALIFIED
-        await self.channel_layer.group_add( # type: ignore
-            self.group_name,
-            self.channel_name
-        )
-        await self.accept()
-        await self.broadcast_dashboard()
         

@@ -29,6 +29,7 @@ const GameTournament: React.FC = () => {
     const ws: any = useRef();
     const [ballSize, setBallSize] = useState<number>(0);
     const { username } = useParams<{ username: string }>();
+    const { type } = useParams<{ type: string }>();
     const navigate = useNavigate();
 
     if (username == undefined || username === '' || username == null)
@@ -61,17 +62,13 @@ const GameTournament: React.FC = () => {
     const [ingame, setIngame] = useState<boolean>(false)
 
     useEffect(() => {
-        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game_tournament/${username}`);
+        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game_tournament/${type}/${username}`);
         ws.current.onopen = () => { console.log('WebSocket connection established'); };
 
         ws.current.onmessage = (event: any) => {
             const jsondata = JSON.parse(event.data);
             if (jsondata.type == 'disconnect') {
                 console.log(jsondata)
-            }if (jsondata.type == 'zab') {
-                ws.current.send(JSON.stringify({
-                    type: 'kikab',
-                }));
             } if (jsondata.type == 'end') {
                 console.log(jsondata)
                 setIngame(false)

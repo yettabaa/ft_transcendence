@@ -11,7 +11,7 @@ const App: React.FC = () => {
             <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/game/:username/:game_id" element={<Game />} />
-                <Route path="/game_tournament/:username" element={<GameTournament />} />
+                <Route path="/game_tournament/:type/:username" element={<GameTournament />} />
                 <Route path="/game-boot" element={<Game_boot />} />
 
             </Routes>
