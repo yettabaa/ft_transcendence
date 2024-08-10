@@ -192,7 +192,6 @@ TYPE = 'type'
 WINER = 'winer'
 class RemoteTournament(AsyncWebsocketConsumer):
     games = {}
-    coroutines_lock = asyncio.Lock()
     async def connect(self):
         self.username = self.scope['url_route']['kwargs']['username']
         self.type = int(self.scope['url_route']['kwargs']['type'])
@@ -204,18 +203,16 @@ class RemoteTournament(AsyncWebsocketConsumer):
         if not pending_tournament:
             self.group_name = 'tournament_' + str(uuid.uuid4())
             self.id = 1
-            async with RemoteTournament.coroutines_lock:
-                RemoteTournament.games[self.group_name] = {COMPETITORS:{self.id:{SOCKET:self,
-                USERNAME:self.username, ROUND:0}}}
-                RemoteTournament.games[self.group_name][TOURNAMENT] = FIRSTROUND
-                RemoteTournament.games[self.group_name][TYPE] = self.type
+            RemoteTournament.games[self.group_name] = {COMPETITORS:{self.id:{SOCKET:self,
+            USERNAME:self.username, ROUND:0}}}
+            RemoteTournament.games[self.group_name][TOURNAMENT] = FIRSTROUND
+            RemoteTournament.games[self.group_name][TYPE] = self.type
         else:
             competitors = RemoteTournament.games[pending_tournament][COMPETITORS]
             self.group_name = pending_tournament
-            async with RemoteTournament.coroutines_lock:
-                self.id = len(competitors) + 1
-                competitors[self.id]= {SOCKET:self,
-                USERNAME:self.username, ROUND:0}
+            self.id = len(competitors) + 1
+            competitors[self.id]= {SOCKET:self,
+            USERNAME:self.username, ROUND:0}
         await self.connect_socket()
         if len(RemoteTournament.games[self.group_name][COMPETITORS]) == self.type:
             for i in range(int(self.type / 2)):
@@ -273,7 +270,7 @@ class RemoteTournament(AsyncWebsocketConsumer):
             await self.opponent_socket.send(text_data=json.dumps(data))
         elif type == 'start' and hasattr(self, 'game') and self.game.state == INITIALIZED:
             # print(f'{self.username} start')
-            async with RemoteTournament.coroutines_lock:
+            
                 self.game.state = RUNNING
                 self.task = self.opponent_socket.task = asyncio.create_task(
                     self.game.run_game_tournament(1) )
@@ -341,9 +338,8 @@ class RemoteTournament(AsyncWebsocketConsumer):
         return False
 
     async def broadcast_dashboard(self):
-        async with RemoteTournament.coroutines_lock:
-            max = RemoteTournament.games[self.group_name][TOURNAMENT]
-            _value = RemoteTournament.games[self.group_name][COMPETITORS]
+        max = RemoteTournament.games[self.group_name][TOURNAMENT]
+        _value = RemoteTournament.games[self.group_name][COMPETITORS]
         dashboard = []
         for j in range(max +1):
             # print(f"j {j} max {max +1}")

@@ -12,7 +12,7 @@ const Login: React.FC = () => {
         navigate(`/game/${name}/${id}`)
     }
     const handeltournament = () => {
-        navigate(`/game_tournament/${name}`)
+        navigate(`/game_tournament/8/${name}`)
     }
     return (
         <div className="flex flex-col gap-[2rem] justify-center items-center h-screen bg-bg">

@@ -115,8 +115,8 @@ class Game:
         await self.rightpaddle.init_paddel()
         await self.broadcast({ TYPE: 'score', RIGHT: 0, LEFT: 0})
         previous_time = time.time()
-        # while self.rightScore < goals and self.leftScore < goals:
-        while True:
+        # while True:
+        while self.rightScore < goals and self.leftScore < goals:
             await asyncio.sleep(0.029)
             data = {
                 TYPE: 'ball',
