@@ -50,9 +50,7 @@ const GameTournament: React.FC = () => {
 
 
     const handleResize = () => {
-        console.log('heeere')
         if (table.current) {
-            console.log('heeere')
             const tableWidth = table.current.offsetWidth;
             const radius = tableWidth * 0.03; // 3% of table width
             setBallSize(radius);

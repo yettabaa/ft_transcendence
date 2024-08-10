@@ -189,18 +189,18 @@ SOCKET = 'socket'
 USERNAME = 'username'
 ROUND = 'round'
 TYPE = 'type'
-
+WINER = 'winer'
 class RemoteTournament(AsyncWebsocketConsumer):
     games = {}
     coroutines_lock = asyncio.Lock()
     async def connect(self):
         self.username = self.scope['url_route']['kwargs']['username']
         self.type = int(self.scope['url_route']['kwargs']['type'])
-        if self.in_tournament():
-            await self.connect_socket()
-            return
+        # if self.in_tournament():
+        #     await self.connect_socket()
+        #     return
+        # TODO the user can't participe in same tournament two time
         pending_tournament = self.search_pending_tournament()
-        print(f'pending {pending_tournament}')
         if not pending_tournament:
             self.group_name = 'tournament_' + str(uuid.uuid4())
             self.id = 1
@@ -219,10 +219,8 @@ class RemoteTournament(AsyncWebsocketConsumer):
         await self.connect_socket()
         if len(RemoteTournament.games[self.group_name][COMPETITORS]) == self.type:
             for i in range(int(self.type / 2)):
-                # print(f"{1 + i*2} {2 + i*2}")
                 socket1 = competitors[1 + i*2][SOCKET]
                 socket2 = competitors[2 + i*2][SOCKET]
-                # print(socket1, socket2)
                 if not socket1 and not socket2:
                     print('NO ONE')
                     continue
@@ -245,11 +243,21 @@ class RemoteTournament(AsyncWebsocketConsumer):
 
     async def disconnect(self, code):
         if self.group_name in RemoteTournament.games:
-            if hasattr(RemoteTournament, 'game') and self.game.state != END:
-                data = {TYPE:DISCONNECT, STATUS:QUALIFIED}
-                await self.opponent_socket.send(text_data=json.dumps(data))
             RemoteTournament.games[self.group_name][COMPETITORS][self.id][SOCKET] = None
             await self.broadcast_dashboard()
+            if hasattr(self, 'game') and self.game.state != END:
+                if hasattr(RemoteTournament, 'task'):
+                    self.task.cancel()
+                data = {TYPE:END, STATUS:QUALIFIED}
+                await self.opponent_socket.send(text_data=json.dumps(data))
+            # competitors = RemoteTournament.games[self.group_name][COMPETITORS]
+            count = 0
+            for i in range(self.type):
+                if not RemoteTournament.games[self.group_name][COMPETITORS][i +1][SOCKET]:
+                    count += 1
+            if count == self.type:
+                del RemoteTournament.games[self.group_name]
+        # print(RemoteTournament.games)
         await self.close()
         await self.channel_layer.group_discard( # type: ignore
             self.group_name,
@@ -264,19 +272,19 @@ class RemoteTournament(AsyncWebsocketConsumer):
             data = {TYPE: 'paddle', 'pos': self.paddlePos}
             await self.opponent_socket.send(text_data=json.dumps(data))
         elif type == 'start' and hasattr(self, 'game') and self.game.state == INITIALIZED:
-            print(f'{self.username} start')
+            # print(f'{self.username} start')
             async with RemoteTournament.coroutines_lock:
                 self.game.state = RUNNING
                 self.task = self.opponent_socket.task = asyncio.create_task(
                     self.game.run_game_tournament(1) )
         elif hasattr(self, 'game')  and type == QUALIFYBOARD:
-            if self.state == ELIMINATED or self.state == 'winer':
+            if self.state == ELIMINATED or self.state == WINER:
                 print(f"in receive username {self.username} {self.state}")
                 return await self.broadcast_dashboard()
             competitors = RemoteTournament.games[self.group_name][COMPETITORS]
             self.round += 1
             if (self.round == 2 and self.type == 4) or (self.round == 3 and self.type == 8):
-                self.state = 'winer'
+                self.state = WINER
                 self.round = 2 if self.type == 4 else 3
                 await self.send(text_data=json.dumps({
                 TYPE:END, STATUS:"im the winer" }))
@@ -298,14 +306,14 @@ class RemoteTournament(AsyncWebsocketConsumer):
                 'user1':qualify_socket.username,'user2':self.username})
 
     async def qualify_game(self):
-        if self.state == 'winer':
+        if self.state == WINER:
             return None
         competitors = RemoteTournament.games[self.group_name][COMPETITORS]
         potential_nubmber = 2 * self.round
         virtual_id = math.ceil(self.id / potential_nubmber)
         start_id = ((virtual_id -1) *2) -1 if virtual_id % 2 == 0 else (virtual_id *potential_nubmber) +1
         count = 0
-        print(f'in qualify_game username {self.username} roud {self.round} start {start_id}')
+        # print(f'in qualify_game username {self.username} roud {self.round} start {start_id}')
         for i in range(potential_nubmber):
             potential_id = start_id + i
             if competitors[potential_id][SOCKET] == None:
@@ -316,9 +324,10 @@ class RemoteTournament(AsyncWebsocketConsumer):
                     break
                 else:
                     return competitors[potential_id][SOCKET]
-        # if count == potential_nubmber:
-        #     await self.send(text_data=json.dumps({
-        #             TYPE:END, STATUS:QUALIFIED}))
+        print(f'in qualify_game username {self.username} count {count} start {potential_nubmber}')
+        if count == potential_nubmber:
+            await self.send(text_data=json.dumps({
+                    TYPE:END, STATUS:QUALIFIED}))
         return None
 
     def in_tournament(self):

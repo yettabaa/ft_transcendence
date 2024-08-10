@@ -115,9 +115,8 @@ class Game:
         await self.rightpaddle.init_paddel()
         await self.broadcast({ TYPE: 'score', RIGHT: 0, LEFT: 0})
         previous_time = time.time()
-        # while True:
-        # self.state = RUNNING
-        while self.rightScore < goals and self.leftScore < goals:
+        # while self.rightScore < goals and self.leftScore < goals:
+        while True:
             await asyncio.sleep(0.029)
             data = {
                 TYPE: 'ball',
@@ -137,6 +136,7 @@ class Game:
 
     async def run_game(self, goals):
         try:
+            self.state = RUNNING
             await self.game(goals)
             if self.rightScore == self.leftScore:
                 data = {TYPE:END, STATUS:EQUAL,XP: 90}
@@ -158,12 +158,10 @@ class Game:
             await self.game(goals)
             status = QUALIFIED if self.rightScore > self.leftScore else ELIMINATED
             self.rightPlayer.state = status
-            # self.rightPlayer.id = math.ceil(self.rightPlayer.id / 2) if status == QUALIFIED else -1
             data = {TYPE:END, STATUS:status}
             await self.rightPlayer.send(text_data=json.dumps(data))
             status = QUALIFIED if self.leftScore > self.rightScore else ELIMINATED
             self.leftPlayer.state = status
-            # self.leftPlayer.id = math.ceil(self.leftPlayer.id / 2) if status == QUALIFIED else -1
             data = {TYPE:END, STATUS:status}
             await self.leftPlayer.send(text_data=json.dumps(data))
             print(f'username {self.rightPlayer.username} {self.rightPlayer.state} username {self.leftPlayer.username} {self.leftPlayer.state}')

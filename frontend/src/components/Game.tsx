@@ -60,40 +60,23 @@ const PingPongTable: React.FC = () => {
     }
 
     useEffect(() => {
-        if (game_id == 'tournament')
-            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game_tournament/${username}`);
-        else
-            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/${game_id}`);
+        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/${game_id}`);
 
         ws.current.onopen = () => { console.log('WebSocket connection established'); };
 
         ws.current.onmessage = (event: any) => {
             const data = JSON.parse(event.data);
-            // console.log(data)
             if (data.type == 'disconnect') {
                 console.log(data)
-            }  if (data.type == 'end') {
+            } else if (data.type == 'end') {
                 console.log(data)
-                if (data.status == 'im the winer')
-                   navigate('/login')
-                else if (data.status == 'win') {
-
-                    ws.current.send(JSON.stringify({
-                        type: 'qualifyboard',
-                    }));
-                    ws.current.send(JSON.stringify({
-                        type: 'start_next',
-                    }));
-                }
-
-            }  if (data.type == 'waiting') {
-                console.log(data)
-            }  if(data.type == 'opponents') {
+                navigate('/login')
+            } else if(data.type == 'opponents') {
                 console.log(data)
                 ws.current.send(JSON.stringify({
                     type: 'start',
                 }));
-            }  if (data.type == 'init_paddle') {
+            } else if (data.type == 'init_paddle') {
                 setIsVesible(true)
                 setPositions((prevPositions) => ({
                     ...prevPositions,
@@ -119,6 +102,7 @@ const PingPongTable: React.FC = () => {
                 paddle.current.style.top = `${data.pos}%`
             }
         };
+
 
         ws.current.onclose = (event: any) => {
             if (event.wasClean) {
