@@ -191,7 +191,7 @@ ROUND = 'round'
 TYPE = 'type'
 WINER = 'winer'
 class RemoteTournament(AsyncWebsocketConsumer):
-    games = {}
+    games = {} # move it outside classe
     async def connect(self):
         self.username = self.scope['url_route']['kwargs']['username']
         self.type = int(self.scope['url_route']['kwargs']['type'])
@@ -268,11 +268,13 @@ class RemoteTournament(AsyncWebsocketConsumer):
             self.paddlePos = float(text_data_json['y'])
             data = {TYPE: 'paddle', 'pos': self.paddlePos}
             await self.opponent_socket.send(text_data=json.dumps(data))
+        elif hasattr(self, GAME) and type == 'handshake' and self.game.state == INITIALIZED:
+            self.handshake = True
+            if self.opponent_socket.handshake == True:
+                await self.game.broadcast({TYPE:'ready'})
         elif type == 'start' and hasattr(self, 'game') and self.game.state == INITIALIZED:
-            # print(f'{self.username} start')
-            
-                self.game.state = RUNNING
-                self.task = self.opponent_socket.task = asyncio.create_task(
+            self.game.state = RUNNING
+            self.task = self.opponent_socket.task = asyncio.create_task(
                     self.game.run_game_tournament(1) )
         elif hasattr(self, 'game')  and type == QUALIFYBOARD:
             if self.state == ELIMINATED or self.state == WINER:
@@ -357,6 +359,7 @@ class RemoteTournament(AsyncWebsocketConsumer):
     async def connect_socket(self):
         self.round = FIRSTROUND
         self.state = QUALIFIED
+        self.handshake = False
         await self.channel_layer.group_add( # type: ignore
             self.group_name,
             self.channel_name

@@ -4,7 +4,7 @@
 base_url="http://localhost:5173/game_tournament/4/"
 
 # Number of times to open the link
-times_to_open=16
+times_to_open=4
 
 generate_random_name() {
     echo $(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1)

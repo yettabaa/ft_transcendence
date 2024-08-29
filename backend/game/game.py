@@ -115,8 +115,8 @@ class Game:
         await self.rightpaddle.init_paddel()
         await self.broadcast({ TYPE: 'score', RIGHT: 0, LEFT: 0})
         previous_time = time.time()
-        # while True:
-        while self.rightScore < goals and self.leftScore < goals:
+        while True:
+        # while self.rightScore < goals and self.leftScore < goals:
             await asyncio.sleep(0.029)
             data = {
                 TYPE: 'ball',
@@ -156,6 +156,8 @@ class Game:
     async def run_game_tournament(self, goals):
         try:
             await self.game(goals)
+            self.rightPlayer.handshake = False
+            self.leftPlayer.handshake = False
             status = QUALIFIED if self.rightScore > self.leftScore else ELIMINATED
             self.rightPlayer.state = status
             data = {TYPE:END, STATUS:status}
