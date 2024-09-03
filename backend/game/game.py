@@ -113,7 +113,7 @@ class Game:
     async def game(self, goals):
         await self.leftPaddle.init_paddel()
         await self.rightpaddle.init_paddel()
-        await self.broadcast({ TYPE: 'score', RIGHT: 0, LEFT: 0})
+        await self.broadcast({TYPE: 'score', RIGHT: 0, LEFT: 0})
         previous_time = time.time()
         while True:
         # while self.rightScore < goals and self.leftScore < goals:
@@ -155,16 +155,22 @@ class Game:
 
     async def run_game_tournament(self, goals):
         try:
+            # if not self.rightPlayer.connected:
+            #     data = {TYPE:END, STATUS:QUALIFIED}
+            #     return await self.rightPlayer.send(text_data=json.dumps(data))
+            # if not self.leftPlayer.connected:
+            #     data = {TYPE:END, STATUS:QUALIFIED}
+            #     return await self.leftPlayer.send(text_data=json.dumps(data))
             await self.game(goals)
             self.rightPlayer.handshake = False
             self.leftPlayer.handshake = False
             status = QUALIFIED if self.rightScore > self.leftScore else ELIMINATED
             self.rightPlayer.state = status
-            data = {TYPE:END, STATUS:status}
+            data = {TYPE:END, STATUS:status, 'debug':'end_game'}
             await self.rightPlayer.send(text_data=json.dumps(data))
             status = QUALIFIED if self.leftScore > self.rightScore else ELIMINATED
             self.leftPlayer.state = status
-            data = {TYPE:END, STATUS:status}
+            data = {TYPE:END, STATUS:status, 'debug':'end_game'}
             await self.leftPlayer.send(text_data=json.dumps(data))
             print(f'username {self.rightPlayer.username} {self.rightPlayer.state} username {self.leftPlayer.username} {self.leftPlayer.state}')
         except asyncio.CancelledError:

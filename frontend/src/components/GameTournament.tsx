@@ -31,14 +31,14 @@ const GameTournament: React.FC = () => {
     const { username } = useParams<{ username: string }>();
     const { type } = useParams<{ type: string }>();
     const navigate = useNavigate();
-
+    
     if (username == undefined || username === '' || username == null)
         return;
-
+    
     const handelMouse = (e: any) => {
         const tableDimention: any = table.current.getBoundingClientRect();
         let posPaddle: number = ((e.y - tableDimention.top)
-            / tableDimention.height) * 100;
+        / tableDimention.height) * 100;
         (posPaddle < 10) && (posPaddle = 10);
         (posPaddle > 90) && (posPaddle = 90);
         myPaddle.current.style.top = `${posPaddle}%`;
@@ -48,7 +48,6 @@ const GameTournament: React.FC = () => {
         }));
     }
 
-
     const handleResize = () => {
         if (table.current) {
             const tableWidth = table.current.offsetWidth;
@@ -56,6 +55,20 @@ const GameTournament: React.FC = () => {
             setBallSize(radius);
         }
     }
+
+    // show a notification bar with "Accept" or "Reject"
+    const [notificationVisible, setNotificationVisible] = useState<boolean>(false);
+    const [notificationMessage, setNotificationMessage] = useState<string>('');
+    const handleAccept = () => {
+        ws.current.send(JSON.stringify({ type: 'handshake' }));
+        setNotificationVisible(false);
+    };
+    const handleReject = () => {
+        ws.current.send(JSON.stringify({ type: 'reject' }));
+        setNotificationVisible(false);
+    };
+
+    // switch between game and dashboard
     const [data, setData] = useState<any>(null);
     const [ingame, setIngame] = useState<boolean>(false)
 
@@ -70,19 +83,22 @@ const GameTournament: React.FC = () => {
             } if (jsondata.type == 'end') {
                 console.log(jsondata)
                 setIngame(false)
+                setNotificationVisible(false);
                 if (jsondata.status == 'im the winer')
                     return
-                ws.current.send(JSON.stringify({
-                    type: 'qualifyboard',
-                }));
+                console.log('qualifyboard')
+                ws.current.send(JSON.stringify({ type: 'qualifyboard' }));
                 // if (jsondata.status == 'qualified') {
                 // }
             } if (jsondata.type == 'opponents') {
                 // handleResize()
+                setNotificationMessage(`${jsondata.user1} vs ${jsondata.user2}`);
+                setNotificationVisible(true);
+                console.log(jsondata)
+            } if (jsondata.type == 'ready') {
                 ws.current.send(JSON.stringify({
                     type: 'start',
                 }));
-                console.log(jsondata)
             } if (jsondata.type == 'dashboard') {
                 setData(jsondata.rounds)
                 console.log(jsondata.rounds[0])
@@ -141,6 +157,15 @@ const GameTournament: React.FC = () => {
 
     return (
         <div className="bg-bg h-[100vh] flex flex-col gap-8 justify-center items-center">
+            {notificationVisible && (
+                <div className="notification-bar bg-blue-600 text-white p-4 rounded flex justify-between items-center">
+                    <span>{notificationMessage}</span>
+                    <div className="flex gap-2">
+                        <button className="bg-green-500 p-2 rounded" onClick={handleAccept}>Accept</button>
+                        <button className="bg-red-500 p-2 rounded" onClick={handleReject}>Reject</button>
+                    </div>
+                </div>
+            )}
             {ingame && (
                 <>
                     <div className="h-[10%] flex flex-row justify-center items-center">

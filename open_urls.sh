@@ -13,9 +13,9 @@ generate_random_name() {
 # Loop through the numbers and open each URL in the default browser
 for ((i=1; i<=times_to_open; i++))
 do
-    random_name=$(generate_random_name)
+    # random_name=$(generate_random_name)
     # Construct the URL
-    url="${base_url}${random_name}"
+    url="${base_url}${i}"
     
     # Open the URL in the default web browser
     explorer.exe "$url"
