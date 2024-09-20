@@ -50,10 +50,9 @@ const BallComp = () => {
     const loop_hook = (time: number) => {
         if (lastTime.current != undefined) {
             const delta: number = time - lastTime.current
-            if (ballElem.current && tableElem.current &&
-                rightPaddel.current && leftPaddel.current) {
-                game.current.game(delta,10, 300)
-            }
+            game.current.updateGame(delta)
+            if (game.current.rightScore >= 10 || game.current.leftScore >= 10)
+                return
         }
         lastTime.current = time
         animationRef.current = requestAnimationFrame(loop_hook);
