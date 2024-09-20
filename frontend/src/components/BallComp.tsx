@@ -1,66 +1,78 @@
-import React, { useEffect, useRef } from 'react';
-import { LoopHook } from './LoopHook';
-import { Ball, Paddle } from './class';
+import React, { useEffect, useRef, useState } from 'react';
+import { Game } from './class';
 
 
 const BallComp = () => {
     const ballElem: any = useRef();
     const tableElem: any = useRef();
-    const controlledPaddleElem: any = useRef();
-    const paddleBootElem: any = useRef();
-
-    const ball: any = useRef();
-    const paddleBoot: any = useRef();
-    const controlledPaddle: any = useRef();
+    const rightPaddel: any = useRef();
+    const leftPaddel: any = useRef();
+    const game: any = useRef();
     const posPaddle = useRef(0);
+    const animationRef: any = useRef(); // To store the animation frame id
+    const lastTime: any = useRef<FrameRequestCallback>();
 
+    const handelMouse = (e: any) => {
+        const tableDimention = tableElem.current.getBoundingClientRect();
+        posPaddle.current = ((e.y - tableDimention.top)
+        / tableDimention.height) * 100;
+        (posPaddle.current < 10) && (posPaddle.current = 10);
+        (posPaddle.current > 90) && (posPaddle.current = 90);
+        game.current.rightPaddle.y = posPaddle.current;
+        game.current.leftPaddle.y = posPaddle.current;
+    }
+
+    const [ballSize, setBallSize] = useState<number>(0);
+    const handleResize = () => {
+        if (tableElem.current) {
+            const tableWidth = tableElem.current.offsetWidth;
+            const radius = tableWidth * 0.03; // 3% of table width
+            setBallSize(radius);
+        }
+    }
+    
     useEffect(() => {
         if (ballElem.current && tableElem.current &&
-            controlledPaddleElem.current && paddleBootElem.current) {
-            ball.current = new Ball(ballElem.current, tableElem.current);
-            paddleBoot.current = new Paddle(paddleBootElem.current, tableElem.current);
-            controlledPaddle.current = new Paddle(controlledPaddleElem.current, tableElem.current);
+            rightPaddel.current && leftPaddel.current) {
+            game.current = new Game(ballElem.current, rightPaddel.current, leftPaddel.current)
+            if (!animationRef.current)
+                animationRef.current = requestAnimationFrame(loop_hook);
+        }
+        handleResize()
+        document.addEventListener("mousemove", handelMouse)
+        window.addEventListener('resize', handleResize);
+        return () => {
+            document.removeEventListener("mousemove", handelMouse)
+            window.removeEventListener('resize', handleResize);
+        }
+    }, [])
 
-            const handelMouse = (e: any) => {
-                const tableDimention = tableElem.current.getBoundingClientRect();
-                posPaddle.current = ((e.y - tableDimention.top)
-                / tableDimention.height) * 100;
-                (posPaddle.current < 0) && (posPaddle.current = 0);
-                (posPaddle.current > 100) && (posPaddle.current = 100);
-                controlledPaddle.current.pos = posPaddle.current;
-            }
-            document.addEventListener("mousemove", handelMouse)
-            return () => {
-                document.removeEventListener("mousemove", handelMouse)
+    const loop_hook = (time: number) => {
+        if (lastTime.current != undefined) {
+            const delta: number = time - lastTime.current
+            if (ballElem.current && tableElem.current &&
+                rightPaddel.current && leftPaddel.current) {
+                game.current.game(delta,10, 300)
             }
         }
-    }, [ballElem, tableElem, controlledPaddleElem, paddleBootElem])
-
-    LoopHook((delta: number) => {
-        if (ballElem.current && tableElem.current &&
-            controlledPaddleElem.current && paddleBootElem.current) {
-            ball.current.update(delta, controlledPaddle.current, paddleBoot.current);
-            paddleBoot.current.update(delta, ball.current.y);
-            // if (ball.current.isFailure()) {
-            //     ball.current.reset();
-            // }
-        }
-    });
+        lastTime.current = time
+        animationRef.current = requestAnimationFrame(loop_hook);
+    }
     return (
         <div ref={tableElem}
-            className="relative overflow-hidden rounded-[10px] border-[1px] border-[#2b2d30]
-				 bg-red-700 h-[90%] min-w-[500px] w-full">
+            className="relative flex flex-row bg-green-700 w-[64vw] h-[40vw] rounded-md self-center overflow-hidden">
             <div ref={ballElem}
-                className="absolute h-[2.5vh] w-[2.5vh] top-[0%] left-[0%] rounded-[50%] translate-x-[-50%] translate-y-[-50%] bg-white"
-                style={{ left: `50%`, top: `50%` }}>
+                className="absolute  bg-white rounded-full translate-y-[-50%] translate-x-[-50%]"
+                style={{
+                    left: `50%`, top: `50%`, width: `${ballSize}px`,
+                    height: `${ballSize}px`,
+                }}>
             </div>
-            <div ref={controlledPaddleElem}
-                className="absolute  top-[50%] left-[1%] rounded-[1rem]
-                translate-y-[-50%] h-[20%] w-[2%] bg-white">
+            <div ref={rightPaddel}
+                className="absolute w-[2%] h-[20%] bg-white translate-y-[-50%] translate-x-[-50%]">
             </div>
-            <div ref={paddleBootElem}
-                className="absolute top-[50%] right-[1%] rounded-[1rem]
-                translate-y-[-50%] h-[20%] w-[2%] bg-white">
+            <div ref={leftPaddel}
+                className="absolute w-[2%] h-[20%] bg-white translate-y-[-50%] translate-x-[-50%]">
             </div>
         </div>
     );
