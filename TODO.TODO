@@ -1,24 +1,13 @@
 mehdi:
 
-users and token 
-
-invitation -done
-
-get data of users (lvls)
-
-xp/level
-
-save in database
-
+invitation/notification -done
 
 me:
 
-win /lose
+desconect
 
-desconect 
+lock issues in labda function database
 
-refresh
+add timeout in tournament handcheck
 
-timing
-
-tournament / move resulte of match outside class game
+relation in tournament

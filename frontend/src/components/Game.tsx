@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { BrowserRouter as Router, Route, Routes, useParams } from 'react-router-dom';
 import { Link, useNavigate } from "react-router-dom";
+import Cookies from 'js-cookie';
 
 interface Position {
     x: number;
@@ -27,14 +28,12 @@ const PingPongTable: React.FC = () => {
     const myPaddle: any = useRef();
     const paddle: any = useRef();
     const ball: any = useRef();
+    const time: any = useRef();
     const ws: any = useRef();
     const [ballSize, setBallSize] = useState<number>(0);
     const { username } = useParams<{ username: string }>();
     const { game_id } = useParams<{ game_id: string }>();
     const navigate = useNavigate();
-
-    if (username == undefined || username === '' || username == null)
-        return ;
     
     const handelMouse = (e: any) => {
         // if (isVesible) {
@@ -58,8 +57,19 @@ const PingPongTable: React.FC = () => {
             setBallSize(radius);
         }
     }
+    
+    // const token = Cookies.get('auth_token');
+    const token = localStorage.getItem('token');
     useEffect(() => {
-        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/${game_id}`);
+        console.log('Token:', token);  // Check if the token is available
+        if (token && !username) {
+            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/aigame/medium/10/300/?token=${token}`);
+            // ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/random/?token=${token}`);
+        } else {
+            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/${game_id}`);
+            console.error('Token is undefined or missing.');
+        }
+
 
         ws.current.onopen = () => { console.log('WebSocket connection established'); };
 
@@ -76,6 +86,8 @@ const PingPongTable: React.FC = () => {
                     type: 'start',
                 }));
             } else if (data.type == 'init_paddle') {
+                
+                console.log(data)
                 setIsVesible(true)
                 setPositions((prevPositions) => ({
                     ...prevPositions,
@@ -92,12 +104,14 @@ const PingPongTable: React.FC = () => {
             if (data.type == 'ball') {
                 ball.current.style.top = `${data.y}%`;
                 ball.current.style.left = `${data.x}%`;
+                time.current.innerText = parseInt(data.time)
             }
             if (data.type == 'score') {
                 rightScore.current.innerText = data.right;
                 leftScore.current.innerText = data.left;
             }
             if (data.type == 'paddle') {
+                // console.log(data)
                 paddle.current.style.top = `${data.pos}%`
             }
         };
@@ -126,6 +140,9 @@ const PingPongTable: React.FC = () => {
 
     return (
         <div className="bg-bg h-[100vh] flex flex-col gap-8 justify-center items-center">
+            <div className="h-[10%] flex flex-row justify-center items-center">
+                <div ref={time} className="p-[0.5rem]"> 0 </div>
+            </div>
             <div className="h-[10%] flex flex-row justify-center items-center">
                 <div ref={leftScore} className="p-[0.5rem] border-r"> 0 </div>
                 <div ref={rightScore} className="p-[0.5rem] " > 0 </div>
