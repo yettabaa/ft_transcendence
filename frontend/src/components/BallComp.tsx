@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Game } from './class';
+import { Game, Enum } from './class';
 
 
 const BallComp = () => {
@@ -19,7 +19,7 @@ const BallComp = () => {
         (posPaddle.current < 10) && (posPaddle.current = 10);
         (posPaddle.current > 90) && (posPaddle.current = 90);
         game.current.rightPaddle.y = posPaddle.current;
-        game.current.leftPaddle.y = posPaddle.current;
+        // game.current.leftPaddle.y = posPaddle.current;
     }
 
     const [ballSize, setBallSize] = useState<number>(0);
@@ -34,7 +34,7 @@ const BallComp = () => {
     useEffect(() => {
         if (ballElem.current && tableElem.current &&
             rightPaddel.current && leftPaddel.current) {
-            game.current = new Game(ballElem.current, rightPaddel.current, leftPaddel.current)
+            game.current = new Game(ballElem.current, rightPaddel.current, leftPaddel.current, Enum.HARD)
             if (!animationRef.current)
                 animationRef.current = requestAnimationFrame(loop_hook);
         }
@@ -50,13 +50,14 @@ const BallComp = () => {
     const loop_hook = (time: number) => {
         if (lastTime.current != undefined) {
             const delta: number = time - lastTime.current
-            game.current.updateGame(delta)
+            game.current.updateAIGame(delta)
             if (game.current.rightScore >= 10 || game.current.leftScore >= 10)
                 return
         }
         lastTime.current = time
         animationRef.current = requestAnimationFrame(loop_hook);
     }
+    
     return (
         <div ref={tableElem}
             className="relative flex flex-row bg-green-700 w-[64vw] h-[40vw] rounded-md self-center overflow-hidden">

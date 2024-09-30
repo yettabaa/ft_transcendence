@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { BrowserRouter as Router, Route, Routes, useParams } from 'react-router-dom';
 import { Link, useNavigate } from "react-router-dom";
-import Cookies from 'js-cookie';
 
 interface Position {
     x: number;

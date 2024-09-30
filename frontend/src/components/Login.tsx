@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
@@ -25,7 +24,7 @@ const Login: React.FC = () => {
 
             if (response.status === 200) {
                 const token = response.data.access_token; // Assuming token is returned in the response
-                Cookies.set('auth_token', token, { expires: 7, sameSite: 'Lax' }); // Store token in cookies for 7 days
+                // Cookies.set('auth_token', token, { expires: 7, sameSite: 'Lax' }); // Store token in cookies for 7 days
                 console.log('token in login', token)
                 localStorage.setItem('token',token)
                 setErrorMessage(null);  // Clear error message if login is successful
