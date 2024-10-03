@@ -47,17 +47,33 @@ const PingPongTable: React.FC = () => {
     //         }));
     //     // }
     // }
+    const moveDirection = useRef<number>(0);
+    const moveInterval = useRef<NodeJS.Timeout | null>(null);
+
     const handleKeyDown = (e: KeyboardEvent) => {
-        let moves = 0;
+        if (moveDirection.current !== 0) return; // Avoid multiple intervals
+
         if (e.key === 'ArrowUp') {
-            moves = -1; // Move paddle up
-        }if (e.key === 'ArrowDown') {
-            moves = 1; // Move paddle down
+            moveDirection.current = -1; // Paddle moving up
+        } else if (e.key === 'ArrowDown') {
+            moveDirection.current = 1; // Paddle moving down
         }
-        ws.current.send(JSON.stringify({
-            type: 'update',
-            y: moves
-        }));
+
+        if (moveDirection.current !== 0) {
+            // Start sending updates every 50ms
+            moveInterval.current = setInterval(() => {
+                ws.current.send(JSON.stringify({
+                    type: 'update',
+                    y: moveDirection.current // Send the movement direction (-1 or 1)
+                }));
+            }, 50); // Update every 50ms
+        }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+        if ((e.key === 'ArrowUp' && moveDirection.current === -1) || (e.key === 'ArrowDown' && moveDirection.current === 1)) {
+            moveDirection.current = 0; // Stop moving
+        }
     };
 
     const handleResize = () => {
@@ -145,12 +161,14 @@ const PingPongTable: React.FC = () => {
         handleResize()
         // window.addEventListener('mousemove', handelMouse);
         window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
         window.addEventListener('resize', handleResize);
         return () => {
             if (ws.current)
                 ws.current.close();
             // window.removeEventListener('mousemove', handelMouse); 
             window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
             window.removeEventListener('resize', handleResize);
         };
     }, []);
