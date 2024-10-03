@@ -32,21 +32,33 @@ const PingPongTable: React.FC = () => {
     const { username } = useParams<{ username: string }>();
     const { game_id } = useParams<{ game_id: string }>();
     const navigate = useNavigate();
-    
-    const handelMouse = (e: any) => {
-        // if (isVesible) {
-            const tableDimention: any = table.current.getBoundingClientRect();
-            let posPaddle: number = ((e.y - tableDimention.top)
-            / tableDimention.height) * 100;
-            (posPaddle < 10) && (posPaddle = 10);
-            (posPaddle > 90) && (posPaddle = 90);
-            myPaddle.current.style.top = `${posPaddle}%`;
-            ws.current.send(JSON.stringify({
-                type: 'update',
-                y: posPaddle
-            }));
-        // }
-    }
+
+    // const handelMouse = (e: any) => {
+    //     // if (isVesible) {
+    //         const tableDimention: any = table.current.getBoundingClientRect();
+    //         let posPaddle: number = ((e.y - tableDimention.top)
+    //         / tableDimention.height) * 100;
+    //         (posPaddle < 10) && (posPaddle = 10);
+    //         (posPaddle > 90) && (posPaddle = 90);
+    //         // myPaddle.current.style.top = `${posPaddle}%`;
+    //         ws.current.send(JSON.stringify({
+    //             type: 'update',
+    //             y: posPaddle
+    //         }));
+    //     // }
+    // }
+    const handleKeyDown = (e: KeyboardEvent) => {
+        let moves = 0;
+        if (e.key === 'ArrowUp') {
+            moves = -1; // Move paddle up
+        }if (e.key === 'ArrowDown') {
+            moves = 1; // Move paddle down
+        }
+        ws.current.send(JSON.stringify({
+            type: 'update',
+            y: moves
+        }));
+    };
 
     const handleResize = () => {
         if (table.current) {
@@ -55,14 +67,14 @@ const PingPongTable: React.FC = () => {
             setBallSize(radius);
         }
     }
-    
+
     // const token = Cookies.get('auth_token');
     const token = localStorage.getItem('token');
     useEffect(() => {
         console.log('Token:', token);  // Check if the token is available
         if (token && !username) {
-            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/aigame/medium/10/300/?token=${token}`);
-            // ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/random/?token=${token}`);
+            // ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/aigame/medium/10/300/?token=${token}`);
+            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/random/?token=${token}`);
         } else {
             ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game/${username}/${game_id}`);
             console.error('Token is undefined or missing.');
@@ -78,13 +90,13 @@ const PingPongTable: React.FC = () => {
             } else if (data.type == 'end') {
                 console.log(data)
                 navigate('/login')
-            } else if(data.type == 'opponents') {
+            } else if (data.type == 'opponents') {
                 console.log(data)
                 ws.current.send(JSON.stringify({
                     type: 'start',
                 }));
             } else if (data.type == 'init_paddle') {
-                
+
                 console.log(data)
                 setIsVesible(true)
                 setPositions((prevPositions) => ({
@@ -108,10 +120,15 @@ const PingPongTable: React.FC = () => {
                 rightScore.current.innerText = data.right;
                 leftScore.current.innerText = data.left;
             }
-            if (data.type == 'paddle') {
+            if (data.type == 'myPaddle') {
                 // console.log(data)
-                paddle.current.style.top = `${data.pos}%`
+                myPaddle.current.style.top = `${data.pos}%`;
             }
+            if (data.type == 'sidePaddle') {
+                paddle.current.style.top = `${data.pos}%`;
+                // console.log(data)
+            }
+
         };
 
 
@@ -124,14 +141,16 @@ const PingPongTable: React.FC = () => {
         };
 
         ws.current.onerror = (error: any) => { console.error(`WebSocket error: ${error.message}`); };
-        
+
         handleResize()
-        window.addEventListener('mousemove', handelMouse);
+        // window.addEventListener('mousemove', handelMouse);
+        window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('resize', handleResize);
-        return () => { 
+        return () => {
             if (ws.current)
                 ws.current.close();
-            window.removeEventListener('mousemove', handelMouse); 
+            // window.removeEventListener('mousemove', handelMouse); 
+            window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('resize', handleResize);
         };
     }, []);
@@ -161,8 +180,10 @@ const PingPongTable: React.FC = () => {
                 )}
                 <div ref={ball}
                     className="absolute  bg-white rounded-full translate-y-[-50%] translate-x-[-50%]"
-                    style={{ left: `${positions.ball.x}%`, top: `${positions.ball.y}%`,
-                            width: `${ballSize}px`, height: `${ballSize}px` }}
+                    style={{
+                        left: `${positions.ball.x}%`, top: `${positions.ball.y}%`,
+                        width: `${ballSize}px`, height: `${ballSize}px`
+                    }}
                 />
             </div>
         </div>

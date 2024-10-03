@@ -11,6 +11,7 @@ const BallComp = () => {
     const posPaddle = useRef(0);
     const animationRef: any = useRef(); // To store the animation frame id
     const lastTime: any = useRef<FrameRequestCallback>();
+    const moves = useRef(0);
 
     const handelMouse = (e: any) => {
         const tableDimention = tableElem.current.getBoundingClientRect();
@@ -21,6 +22,21 @@ const BallComp = () => {
         game.current.rightPaddle.y = posPaddle.current;
         // game.current.leftPaddle.y = posPaddle.current;
     }
+    const handleKeyDown = (e: KeyboardEvent) => {
+        // let moves = 0;
+        if (e.key === 'ArrowUp') {
+            moves.current = -1; // Move paddle up
+        }else if (e.key === 'ArrowDown') {
+            moves.current = 1; // Move paddle down
+        }
+        // game.current.rightPaddle.update(moves.current);
+        
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            moves.current = 0; // Stop moving when key is released
+        }
+    };
 
     const [ballSize, setBallSize] = useState<number>(0);
     const handleResize = () => {
@@ -34,15 +50,20 @@ const BallComp = () => {
     useEffect(() => {
         if (ballElem.current && tableElem.current &&
             rightPaddel.current && leftPaddel.current) {
-            game.current = new Game(ballElem.current, rightPaddel.current, leftPaddel.current, Enum.HARD)
+            game.current = new Game(ballElem.current, rightPaddel.current, 
+                leftPaddel.current, Enum.EASY)
             if (!animationRef.current)
                 animationRef.current = requestAnimationFrame(loop_hook);
         }
         handleResize()
-        document.addEventListener("mousemove", handelMouse)
+        // document.addEventListener("mousemove", handelMouse)
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
         window.addEventListener('resize', handleResize);
         return () => {
-            document.removeEventListener("mousemove", handelMouse)
+            // document.removeEventListener("mousemove", handelMouse)
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
             window.removeEventListener('resize', handleResize);
         }
     }, [])
@@ -50,6 +71,9 @@ const BallComp = () => {
     const loop_hook = (time: number) => {
         if (lastTime.current != undefined) {
             const delta: number = time - lastTime.current
+            if (moves.current !== 0) {
+                game.current.rightPaddle.update(moves.current); // Update paddle continuously
+            }
             game.current.updateAIGame(delta)
             if (game.current.rightScore >= 10 || game.current.leftScore >= 10)
                 return
