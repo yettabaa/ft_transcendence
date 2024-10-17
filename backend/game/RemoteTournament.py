@@ -8,23 +8,26 @@ from asgiref.sync import sync_to_async
 from users.utils import get_relation, UserRelation
 # from users.user_actions import getUserData
 # from users.models import MatchInvitation
+from src.logger import log
 
 class RemoteTournament(AsyncWebsocketConsumer):
-    games = {} # move it outside classe
+    games = {}
     async def connect(self):
         try:
             # self.user =  self.scope['user']
-            # self.username = self.user.username
-            self.alias = self.scope['url_route']['kwargs']['alias']
+            # self.data = await sync_to_async(lambda: getUserData(self.user,self.user))()
+            self.alias = self.scope['url_route']['kwargs'][Enum.ALIAS]
+            # self.data[Enum.ALIAS] = self.alias
             self.playersNum = int(self.scope['url_route']['kwargs']['playersNum'])
-            # TODO the user can't participe in same tournament two time
-            pending_tournament = self.search_pending_tournament()
+            # log.info(f'{self.user.username} ({self.alias}) is connect')
+            self.data = {'username':self}
+            log.info(f'({self.alias}) is connect')
+            pending_tournament = await self.search_pending_tournament()
             if not pending_tournament:
                 self.group_name = 'tournament_' + str(uuid.uuid4())
                 self.id = 1
                 RemoteTournament.games[self.group_name] = {Enum.COMPETITORS:{self.id:{Enum.SOCKET:self,
                 Enum.ALIAS:self.alias, Enum.ROUND:0}}}
-                RemoteTournament.games[self.group_name][Enum.GLOBALROUND] = 0
                 RemoteTournament.games[self.group_name][Enum.PLAYERSNUM] = self.playersNum
             else:
                 competitors = RemoteTournament.games[pending_tournament][Enum.COMPETITORS]
@@ -34,6 +37,8 @@ class RemoteTournament(AsyncWebsocketConsumer):
                 Enum.ALIAS:self.alias, Enum.ROUND:0}
             await self.connect_socket()
             if len(RemoteTournament.games[self.group_name][Enum.COMPETITORS]) == self.playersNum:
+                RemoteTournament.games[self.group_name][Enum.GLOBALROUND] = 0
+                await asyncio.sleep(1)
                 for i in range(int(self.playersNum / 2)):
                     socket1 = competitors[1 + i*2][Enum.SOCKET]
                     socket2 = competitors[2 + i*2][Enum.SOCKET]
@@ -47,61 +52,52 @@ class RemoteTournament(AsyncWebsocketConsumer):
                         data = {Enum.TYPE:Enum.END, Enum.STATUS:Enum.QUALIFIED, 'debug':'start'}
                         await socket1.send(text_data=json.dumps(data))
                         continue
-                    # print(f"round {self.round}    {socket1.username} vs {socket2.username}")
-                    socket1.opponent_socket = socket2
-                    socket2.opponent_socket = socket1
-                    game = Game(socket1, socket2)
-                    game.id = i +1
-                    socket1.game = socket2.game = game
-                    await game.broadcast({Enum.TYPE:Enum.OPPONENTS, 
-                    'user1':socket1.alias,'user2':socket2.alias})
+                    socket1.opponent = socket2
+                    socket2.opponent = socket1
+                    await self.start_game(socket1=socket1, socket2=socket2)
         except Exception as e:
-            print(f'exeption in connect tournament: {e}')
-
-    async def disconnect(self, code):
+            log.error(f'exeption in connect tournament: {e}')
+    
+    async def disconnect(self, close_code=1000):
         try:
-            self.connected = False
             if self.group_name in RemoteTournament.games:
                 RemoteTournament.games[self.group_name][Enum.COMPETITORS][self.id][Enum.SOCKET] = None
                 await self.broadcast_dashboard()
-                if hasattr(self, 'game') and self.game.state != Enum.END:
-                    if hasattr(self, 'task'):
+                if self.game and self.game.state != Enum.END:
+                    if self.task:
                         self.task.cancel()
+                        self.task = None
                     data = {Enum.TYPE:Enum.END, Enum.STATUS:Enum.QUALIFIED, 'debug':'disconnect'}
-                    await self.opponent_socket.send(text_data=json.dumps(data))
-                # competitors = RemoteTournament.games[self.group_name][COMPETITORS]
-                if len(RemoteTournament.games[self.group_name][Enum.COMPETITORS]) == self.playersNum:
+                    await self.opponent.send(text_data=json.dumps(data))
+                if Enum.GLOBALROUND not in RemoteTournament.games[self.group_name]:
+                    del RemoteTournament.games[self.group_name][Enum.COMPETITORS][self.id]
+                    if len(RemoteTournament.games[self.group_name][Enum.COMPETITORS]) == 0:
+                        del RemoteTournament.games[self.group_name]
+                else:
                     count = 0
                     for i in range(self.playersNum):
                         if not RemoteTournament.games[self.group_name][Enum.COMPETITORS][i +1][Enum.SOCKET]:
                             count += 1
                     if count == self.playersNum:
                         del RemoteTournament.games[self.group_name]
-            # print(RemoteTournament.games)
+                # competitors = RemoteTournament.games[self.group_name][COMPETITORS]
             await self.close()
             await self.channel_layer.group_discard( # type: ignore
                 self.group_name,
                 self.channel_name
             )
+            # log.info(f'{self.user.username} ({self.alias}) is disconnect')
+            log.info(f'({self.alias}) is disconnect')
+            self.debug()
         except Exception as e:
-            print(f'exeption in disconnect tournament: {e}')
+            log.error(f'exeption in disconnect tournament: {e}')
 
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
             type = text_data_json[Enum.TYPE]
-            if hasattr(self, 'game') and type == 'update': # after opnents
-                self.paddlePos = float(text_data_json['y'])
-                data = {Enum.TYPE: 'paddle', 'pos': self.paddlePos}
-                await self.opponent_socket.send(text_data=json.dumps(data))
-            elif hasattr(self, Enum.GAME) and type == 'handshake' and self.game.state == Enum.INITIALIZED:
-                self.handshake = True
-                if self.opponent_socket.handshake == True:
-                    await self.game.broadcast({Enum.TYPE:'ready'})
-            elif type == 'start' and hasattr(self, 'game') and self.game.state == Enum.INITIALIZED:
-                self.game.state = Enum.RUNNING
-                self.task = self.opponent_socket.task = asyncio.create_task(
-                        self.game.run_game_tournament(1) )
+            if type == 'update' and self.game and self.task:
+                await self.game.update_paddle(socket=self, moves=float(text_data_json['y']))
             elif type == Enum.QUALIFYBOARD:
                 if self.state == Enum.ELIMINATED or self.state == Enum.WINER:
                     return await self.broadcast_dashboard()
@@ -120,15 +116,11 @@ class RemoteTournament(AsyncWebsocketConsumer):
                 if not qualify_socket:
                     return
                 else:
-                    qualify_socket.opponent_socket = self
-                    self.opponent_socket = qualify_socket
-                    game = Game(qualify_socket, self)
-                    game.id = math.ceil(self.game.id / 2)
-                    self.game = qualify_socket.game = game
-                    await game.broadcast({Enum.TYPE:Enum.OPPONENTS, 
-                    'user1':qualify_socket.alias,'user2':self.alias})
+                    qualify_socket.opponent = self
+                    self.opponent = qualify_socket
+                    await self.start_game(socket1=qualify_socket, socket2=self)
         except Exception as e:
-            print(f'exeption in receive tournament: {e}')
+            log.error(f'exeption in receive tournament: {e}')
 
     async def qualify_game(self):
         try:
@@ -139,8 +131,6 @@ class RemoteTournament(AsyncWebsocketConsumer):
             virtual_id = math.ceil(self.id / potential_nubmber)
             start_id = ((virtual_id -1) *2) -1 if virtual_id % 2 == 0 else (virtual_id *potential_nubmber) +1
             count = 0
-            #\ print(f'in qualify_game username {self.username} roud {self.round} start {start_id}')
-            # print(f"len {len(RemoteTournament.games[self.group_name][COMPETITORS])} potential_nubmber {potential_nubmber}")
             for i in range(potential_nubmber):
                 potential_id = start_id + i
                 if competitors[potential_id][Enum.SOCKET] == None:
@@ -151,73 +141,94 @@ class RemoteTournament(AsyncWebsocketConsumer):
                         break
                     else:
                         return competitors[potential_id][Enum.SOCKET]
-            print(f'in qualify_game username {self.alias} count {count} start {potential_nubmber}')
             if count == potential_nubmber:
                 await self.send(text_data=json.dumps({
                     Enum.TYPE:Enum.END, Enum.STATUS:Enum.QUALIFIED, 'debug':'qualify_game'}))
             return None
         except Exception as e:
-            print(f'exeption in qualify_game tournament: {e}')
+            log.error(f'exeption in qualify_game tournament: {e}')
+
+    async def start_game(self, socket1, socket2):
+        try:
+            # log.warning(f'{socket1.user.username} ({socket1.alias}) vs {socket2.user.username} ({socket2.alias}) ')
+            game = socket1.game = socket2.game = Game(socket1, socket2)
+            game.state = Enum.RUNNING
+            socket1.task = socket2.task = asyncio.create_task (
+                game.run_game_tournament(goals=5)
+            )
+        except Exception as e:
+            log.error(f'exeption start_game tournament: {e}')
 
     async def broadcast_dashboard(self):
         try:
-            max = RemoteTournament.games[self.group_name][Enum.GLOBALROUND]
+            max = 0
+            if Enum.GLOBALROUND in RemoteTournament.games[self.group_name]:
+                max = RemoteTournament.games[self.group_name][Enum.GLOBALROUND]
             _value = RemoteTournament.games[self.group_name][Enum.COMPETITORS]
             dashboard = []
             for j in range(max +1):
-                # print(f"j {j} max {max +1}")
                 dashboard.append ({ 
                     # f"username{i +1}": {key: True if value else False}
                     f"username{key}": value[Enum.ALIAS]
                     for key, value in _value.items() #get by id
                     if value[Enum.ROUND] >= j
                 })
-            # print(_value)
-            # print({TYPE:'dashboard', 'rounds':dashboard})
             await self.send_group({Enum.TYPE:'dashboard', 'rounds':dashboard})
         except Exception as e:
-            print(f'exeption in broadcast_dashboard tournament: {e}')
+            log.error(f'exeption in broadcast_dashboard tournament: {e}')
 
     async def connect_socket(self):
         try:
             self.round = 0
             self.state = Enum.QUALIFIED
             self.handshake = False
-            self.connected = True
+            self.game = None
+            self.task = None
             await self.channel_layer.group_add( # type: ignore
                 self.group_name,
                 self.channel_name
             )
             await self.accept()
             await self.broadcast_dashboard()
-
-            # debug
-            for key, com in RemoteTournament.games.items():
-                l = []
-                for id, value in com[Enum.COMPETITORS].items():
-                    l.append(value[Enum.ALIAS])
-                    # print(value)
-                print(f"{key} {l}")
+            self.debug()
         except Exception as e:
-            print(f'exeption in connect_socket tournament: {e}')
+            log.error(f'exeption in connect_socket tournament: {e}')
 
-    def search_pending_tournament(self):
+    async def search_pending_tournament(self):
         try:
             pending = {
                 key for key, value in RemoteTournament.games.items() 
                 if Enum.PLAYERSNUM in value and value[Enum.PLAYERSNUM] == self.playersNum
                 and Enum.COMPETITORS in value and len(value[Enum.COMPETITORS]) < self.playersNum
             }
+            log.warning(f'serch {pending}')
             if not pending:
                 return None
             waiting_tournament = list(pending)[0]
             competitors = RemoteTournament.games[waiting_tournament][Enum.COMPETITORS]
-            for key, value in competitors.items():
+            for value in competitors.values():
                 if value[Enum.ALIAS] == self.alias:
                     return None
+                # user  = value[Enum.SOCKET].user
+                # relation = await sync_to_async(lambda: get_relation(user1=self.user, user2=user))()
+                # if relation == UserRelation.BLOCKED or relation == UserRelation.BLOCKER:
+                #     return None
             return waiting_tournament
         except Exception as e:
-            print(f'exeption in search_pending_tournament tournament: {e}')
+            log.error(f'exeption in search_pending_tournament tournament: {e}')
+    
+    def debug(self):
+        try:
+            str = '\n'
+            for key, com in RemoteTournament.games.items():
+                list = []
+                for id, value in com[Enum.COMPETITORS].items():
+                    list.append(value[Enum.ALIAS])
+                str += f'{key}\n{list}\n'
+            log.info(str)
+        except Exception as e:
+            log.error(f'exeption in debug tournament: {e}')
+
 
     async def send_group(self, data=None, sender=''):
         try:
@@ -232,7 +243,7 @@ class RemoteTournament(AsyncWebsocketConsumer):
                 }
             )
         except Exception as e:
-            print(f'exeption in send_group tournament: {e}')
+            log.error(f'exeption in send_group tournament: {e}')
 
     async def send_channel(self, event):
         if event['sender_channel'] == self.alias:
