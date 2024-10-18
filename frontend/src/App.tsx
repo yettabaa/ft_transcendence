@@ -18,7 +18,7 @@ const App: React.FC = () => {
                 <Route path="/game/:game_id" element={<Invitation />} />
                 <Route path="/game/random" element={<Game />} />
                 <Route path="/game/:username/:game_id" element={<Game />} />
-                <Route path="/game_tournament/:type/:username" element={<GameTournament />} />
+                <Route path="/game_tournament/:playersNum/:alias" element={<GameTournament />} />
                 <Route path="/game-boot" element={<Game_boot />} />
 
             </Routes>

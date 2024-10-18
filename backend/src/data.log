@@ -1,0 +1,339 @@
+[INFO] 14:04  Runserver 
+[INFO] 13:05 (1) is connect
+[WARNING] 13:05 serch set()
+[INFO] 13:05 
+tournament_fc245cf8-51f3-44ad-8372-fc27e607a867
+['1']
+
+[INFO] 13:05 (1) is disconnect
+[INFO] 13:05 
+
+[INFO] 13:05 (1) is connect
+[WARNING] 13:05 serch set()
+[INFO] 13:05 
+tournament_5e73ce11-f840-4b46-8196-803b0a506879
+['1']
+
+[INFO] 13:14 (1) is disconnect
+[INFO] 13:14 
+
+[INFO] 13:14 (1) is connect
+[WARNING] 13:14 serch set()
+[INFO] 13:14 
+tournament_fe1f4b33-e5db-4859-ada2-df72c9e592ce
+['1']
+
+[INFO] 13:14 (1) is disconnect
+[INFO] 13:14 
+
+[INFO] 13:14 (1) is connect
+[WARNING] 13:14 serch set()
+[INFO] 13:14 
+tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6
+['1']
+
+[INFO] 13:14 (2) is connect
+[WARNING] 13:14 serch {'tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6'}
+[INFO] 13:14 
+tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6
+['1', '2']
+
+[INFO] 13:14 (3) is connect
+[WARNING] 13:14 serch {'tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6'}
+[INFO] 13:14 
+tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6
+['1', '2', '3']
+
+[INFO] 13:14 (4) is connect
+[WARNING] 13:14 serch {'tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6'}
+[INFO] 13:14 
+tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6
+['1', '2', '3', '4']
+
+[INFO] 13:14 (4) is disconnect
+[INFO] 13:14 
+tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6
+['1', '2', '3', '4']
+
+[INFO] 13:14 (3) is disconnect
+[INFO] 13:14 
+tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6
+['1', '2', '3', '4']
+
+[INFO] 13:14 (2) is disconnect
+[INFO] 13:14 
+tournament_d30bc2b4-39b7-4ac6-96d7-45c281cbb4f6
+['1', '2', '3', '4']
+
+[INFO] 13:14 (1) is disconnect
+[INFO] 13:14 
+
+[INFO] 13:14 (4) is connect
+[WARNING] 13:14 serch set()
+[INFO] 13:14 
+tournament_a430b021-b8c4-4c85-97ef-cc308daf470e
+['4']
+
+[INFO] 13:14 (4) is disconnect
+[INFO] 13:14 
+
+[INFO] 13:14 (3) is connect
+[WARNING] 13:14 serch set()
+[INFO] 13:14 
+tournament_f53d0b91-2aab-4863-8baf-825c9203fd4c
+['3']
+
+[INFO] 13:14 (4) is connect
+[WARNING] 13:14 serch {'tournament_f53d0b91-2aab-4863-8baf-825c9203fd4c'}
+[INFO] 13:14 
+tournament_f53d0b91-2aab-4863-8baf-825c9203fd4c
+['3', '4']
+
+[INFO] 13:14 (1) is connect
+[WARNING] 13:14 serch {'tournament_f53d0b91-2aab-4863-8baf-825c9203fd4c'}
+[INFO] 13:14 
+tournament_f53d0b91-2aab-4863-8baf-825c9203fd4c
+['3', '4', '1']
+
+[INFO] 13:14 (2) is connect
+[WARNING] 13:14 serch {'tournament_f53d0b91-2aab-4863-8baf-825c9203fd4c'}
+[INFO] 13:14 
+tournament_f53d0b91-2aab-4863-8baf-825c9203fd4c
+['3', '4', '1', '2']
+
+[INFO] 13:14 (4) is disconnect
+[INFO] 13:14 
+tournament_f53d0b91-2aab-4863-8baf-825c9203fd4c
+['3', '4', '1', '2']
+
+[INFO] 13:14 (3) is disconnect
+[INFO] 13:14 
+tournament_f53d0b91-2aab-4863-8baf-825c9203fd4c
+['3', '4', '1', '2']
+
+[ERROR] 13:14 exeption in disconnect tournament: Attempt to send on a closed protocol
+[INFO] 13:14 (2) is disconnect
+[INFO] 13:14 
+
+[INFO] 13:14 (4) is connect
+[WARNING] 13:14 serch set()
+[INFO] 13:14 
+tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c
+['4']
+
+[INFO] 13:14 (3) is connect
+[WARNING] 13:14 serch {'tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c'}
+[INFO] 13:14 
+tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c
+['4', '3']
+
+[INFO] 13:14 (1) is connect
+[WARNING] 13:14 serch {'tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c'}
+[INFO] 13:14 
+tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c
+['4', '3', '1']
+
+[INFO] 13:14 (2) is connect
+[WARNING] 13:14 serch {'tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c'}
+[INFO] 13:14 
+tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c
+['4', '3', '1', '2']
+
+[INFO] 13:14 (4) is disconnect
+[INFO] 13:14 
+tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c
+['4', '3', '1', '2']
+
+[INFO] 13:14 (3) is disconnect
+[INFO] 13:14 
+tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c
+['4', '3', '1', '2']
+
+[INFO] 13:14 (1) is disconnect
+[INFO] 13:14 
+tournament_3bc9400f-30b1-4312-8ab3-04820ffd8c5c
+['4', '3', '1', '2']
+
+[INFO] 13:14 (2) is disconnect
+[INFO] 13:14 
+
+[ERROR] 13:14 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:14 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:14 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:14 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:14 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:14 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:14 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:14 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:14 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:14 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:14 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:14 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:14 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:14 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:14 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:14 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:15 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:15 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:15 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:15 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:15 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:15 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:15 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:15 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:18 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:18 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:18 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:18 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:18 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:18 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[INFO] 13:18 (1) is connect
+[WARNING] 13:18 serch set()
+[INFO] 13:18 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1']
+
+[INFO] 13:18 (4) is connect
+[WARNING] 13:18 serch {'tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3'}
+[INFO] 13:18 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4']
+
+[INFO] 13:18 (3) is connect
+[WARNING] 13:18 serch {'tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3'}
+[INFO] 13:18 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4', '3']
+
+[INFO] 13:18 (2) is connect
+[WARNING] 13:18 serch {'tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3'}
+[INFO] 13:18 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4', '3', '2']
+
+[ERROR] 13:18 exeption in run_game_tournament: Object of type RemoteTournament is not JSON serializable
+[ERROR] 13:18 exeption in run_game_tournament: Object of type RemoteTournament is not JSON serializable
+[INFO] 13:19 (1) is disconnect
+[INFO] 13:19 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4', '3', '2']
+
+[INFO] 13:19 (1) is connect
+[WARNING] 13:19 serch set()
+[INFO] 13:19 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4', '3', '2']
+tournament_81b1fc6f-6d5a-4936-8e03-cca8e1ae8134
+['1']
+
+[INFO] 13:19 (1) is disconnect
+[INFO] 13:19 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4', '3', '2']
+
+[INFO] 13:19 (1) is connect
+[WARNING] 13:19 serch set()
+[INFO] 13:19 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4', '3', '2']
+tournament_3a3ca532-46c7-47ba-bb81-655472b713af
+['1']
+
+[INFO] 13:20 (1) is disconnect
+[INFO] 13:20 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4', '3', '2']
+
+[INFO] 13:20 (4) is disconnect
+[INFO] 13:20 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4', '3', '2']
+
+[INFO] 13:20 (3) is disconnect
+[INFO] 13:20 
+tournament_8f6cad65-5b59-45f0-8705-2edac554b4b3
+['1', '4', '3', '2']
+
+[INFO] 13:20 (2) is disconnect
+[INFO] 13:20 
+
+[ERROR] 13:20 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:20 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:20 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:20 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:20 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:20 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:20 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:20 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[ERROR] 13:20 exeption in connect tournament: invalid literal for int() with base 10: 'undefined'
+[ERROR] 13:20 exeption in disconnect tournament: 'RemoteTournament' object has no attribute 'group_name'
+[INFO] 13:21 (1) is connect
+[WARNING] 13:21 serch set()
+[INFO] 13:21 
+tournament_3658718a-9d4d-41d2-a1d2-69ef288f7eee
+['1']
+
+[INFO] 13:21 (1) is disconnect
+[INFO] 13:21 
+
+[INFO] 13:21 (1) is connect
+[WARNING] 13:21 serch set()
+[INFO] 13:21 
+tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d
+['1']
+
+[INFO] 13:21 (4) is connect
+[WARNING] 13:21 serch {'tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d'}
+[INFO] 13:21 
+tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d
+['1', '4']
+
+[INFO] 13:21 (2) is connect
+[WARNING] 13:21 serch {'tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d'}
+[INFO] 13:21 
+tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d
+['1', '4', '2']
+
+[INFO] 13:21 (3) is connect
+[WARNING] 13:21 serch {'tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d'}
+[INFO] 13:21 
+tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d
+['1', '4', '2', '3']
+
+[INFO] 13:21 (1) is disconnect
+[INFO] 13:21 
+tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d
+['1', '4', '2', '3']
+
+[INFO] 13:21 (1) is connect
+[WARNING] 13:21 serch set()
+[INFO] 13:21 
+tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d
+['1', '4', '2', '3']
+tournament_e47c146c-b692-4825-bdfe-a7ef0f1ea74c
+['1']
+
+[INFO] 13:21 (1) is disconnect
+[INFO] 13:21 
+tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d
+['1', '4', '2', '3']
+
+[INFO] 13:21 (1) is connect
+[WARNING] 13:21 serch set()
+[INFO] 13:21 
+tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d
+['1', '4', '2', '3']
+tournament_039b28f7-8390-41d0-85af-6179c6309aa5
+['1']
+
+[ERROR] 13:21 exeption in run_game_tournament: Object of type RemoteTournament is not JSON serializable
+[INFO] 13:36 (1) is connect
+[WARNING] 13:36 serch {'tournament_039b28f7-8390-41d0-85af-6179c6309aa5'}
+[INFO] 13:36 
+tournament_bc7e8796-8344-410a-b3c0-202b218a3f3d
+['1', '4', '2', '3']
+tournament_039b28f7-8390-41d0-85af-6179c6309aa5
+['1']
+tournament_c838c467-a497-4eb3-a166-0db894d714e0
+['1']
+

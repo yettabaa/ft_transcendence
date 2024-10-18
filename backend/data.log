@@ -1,20 +1,85 @@
-[INFO] 21:10  Runserver 
-[INFO] 21:10 (1) is connect
-[WARNING] 21:10 serch set()
-[INFO] 21:10 
-tournament_c6682ffd-2bd9-4118-935b-417523c9f70f
+[INFO] 17:22  Runserver 
+[INFO] 17:22 (1) is connect
+[WARNING] 17:22 serch set()
+[INFO] 17:22 
+tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06
 ['1']
 
-[INFO] 21:10 (1) is connect
-[WARNING] 21:10 serch {'tournament_c6682ffd-2bd9-4118-935b-417523c9f70f'}
-[INFO] 21:10 
-tournament_c6682ffd-2bd9-4118-935b-417523c9f70f
-['1']
-tournament_f9866cd9-315a-466f-9d9a-54a1b410c16b
+[INFO] 17:22 (2) is connect
+[WARNING] 17:22 serch {'tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06'}
+[INFO] 17:22 
+tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06
+['1', '2']
+
+[INFO] 17:22 (3) is connect
+[WARNING] 17:22 serch {'tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06'}
+[INFO] 17:22 
+tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06
+['1', '2', '3']
+
+[INFO] 17:22 (4) is connect
+[WARNING] 17:22 serch {'tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06'}
+[INFO] 17:22 
+tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06
+['1', '2', '3', '4']
+
+[INFO] 17:22 (4) is disconnect
+[INFO] 17:22 
+tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06
+['1', '2', '3', '4']
+
+[INFO] 17:22 (3) is disconnect
+[INFO] 17:22 
+tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06
+['1', '2', '3', '4']
+
+[INFO] 17:22 (2) is disconnect
+[INFO] 17:22 
+tournament_a92456e8-d951-4cb4-b6a7-24c7a706ef06
+['1', '2', '3', '4']
+
+[INFO] 17:22 (1) is disconnect
+[INFO] 17:22 
+
+[INFO] 17:22 (1) is connect
+[WARNING] 17:22 serch set()
+[INFO] 17:22 
+tournament_3916f714-2d4d-4e38-9265-a0d42c70c215
 ['1']
 
-[INFO] 21:10 (1) is disconnect
-[INFO] 21:10 
-tournament_f9866cd9-315a-466f-9d9a-54a1b410c16b
-['1']
+[INFO] 17:22 (2) is connect
+[WARNING] 17:22 serch {'tournament_3916f714-2d4d-4e38-9265-a0d42c70c215'}
+[INFO] 17:22 
+tournament_3916f714-2d4d-4e38-9265-a0d42c70c215
+['1', '2']
+
+[INFO] 17:22 (3) is connect
+[WARNING] 17:22 serch {'tournament_3916f714-2d4d-4e38-9265-a0d42c70c215'}
+[INFO] 17:22 
+tournament_3916f714-2d4d-4e38-9265-a0d42c70c215
+['1', '2', '3']
+
+[INFO] 17:22 (4) is connect
+[WARNING] 17:22 serch {'tournament_3916f714-2d4d-4e38-9265-a0d42c70c215'}
+[INFO] 17:22 
+tournament_3916f714-2d4d-4e38-9265-a0d42c70c215
+['1', '2', '3', '4']
+
+[INFO] 17:33 (1) is disconnect
+[INFO] 17:33 
+tournament_3916f714-2d4d-4e38-9265-a0d42c70c215
+['1', '2', '3', '4']
+
+[INFO] 17:33 (2) is disconnect
+[INFO] 17:33 
+tournament_3916f714-2d4d-4e38-9265-a0d42c70c215
+['1', '2', '3', '4']
+
+[INFO] 17:33 (3) is disconnect
+[INFO] 17:33 
+tournament_3916f714-2d4d-4e38-9265-a0d42c70c215
+['1', '2', '3', '4']
+
+[INFO] 17:33 (4) is disconnect
+[INFO] 17:33 
 

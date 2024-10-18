@@ -98,27 +98,27 @@ class RemoteTournament(AsyncWebsocketConsumer):
             type = text_data_json[Enum.TYPE]
             if type == 'update' and self.game and self.task:
                 await self.game.update_paddle(socket=self, moves=float(text_data_json['y']))
-            elif type == Enum.QUALIFYBOARD:
-                if self.state == Enum.ELIMINATED or self.state == Enum.WINER:
-                    return await self.broadcast_dashboard()
-                competitors = RemoteTournament.games[self.group_name][Enum.COMPETITORS]
-                self.round += 1
-                if (self.round == 2 and self.playersNum == 4) or (self.round == 3 and self.playersNum == 8):
-                    self.state = Enum.WINER
-                    self.round = 2 if self.playersNum == 4 else 3
-                    await self.send(text_data=json.dumps({
-                    Enum.TYPE:Enum.END, Enum.STATUS:"im the winer" }))
-                competitors[self.id][Enum.ROUND] = self.round
-                if self.round >= RemoteTournament.games[self.group_name][Enum.GLOBALROUND]:
-                    RemoteTournament.games[self.group_name][Enum.GLOBALROUND] = self.round
-                await self.broadcast_dashboard()
-                qualify_socket = await self.qualify_game()
-                if not qualify_socket:
-                    return
-                else:
-                    qualify_socket.opponent = self
-                    self.opponent = qualify_socket
-                    await self.start_game(socket1=qualify_socket, socket2=self)
+            # elif type == Enum.QUALIFYBOARD:
+            #     if self.state == Enum.ELIMINATED or self.state == Enum.WINER:
+            #         return await self.broadcast_dashboard()
+            #     competitors = RemoteTournament.games[self.group_name][Enum.COMPETITORS]
+            #     self.round += 1
+            #     if (self.round == 2 and self.playersNum == 4) or (self.round == 3 and self.playersNum == 8):
+            #         self.state = Enum.WINER
+            #         self.round = 2 if self.playersNum == 4 else 3
+            #         await self.send(text_data=json.dumps({
+            #         Enum.TYPE:Enum.END, Enum.STATUS:"im the winer" }))
+            #     competitors[self.id][Enum.ROUND] = self.round
+            #     if self.round >= RemoteTournament.games[self.group_name][Enum.GLOBALROUND]:
+            #         RemoteTournament.games[self.group_name][Enum.GLOBALROUND] = self.round
+            #     await self.broadcast_dashboard()
+            #     qualify_socket = await self.qualify_game()
+            #     if not qualify_socket:
+            #         return
+            #     else:
+            #         qualify_socket.opponent = self
+            #         self.opponent = qualify_socket
+            #         await self.start_game(socket1=qualify_socket, socket2=self)
         except Exception as e:
             log.error(f'exeption in receive tournament: {e}')
 
@@ -147,6 +147,28 @@ class RemoteTournament(AsyncWebsocketConsumer):
             return None
         except Exception as e:
             log.error(f'exeption in qualify_game tournament: {e}')
+    
+    async def qualifyboard(self):
+        if self.state == Enum.ELIMINATED or self.state == Enum.WINER:
+            return await self.broadcast_dashboard()
+        competitors = RemoteTournament.games[self.group_name][Enum.COMPETITORS]
+        self.round += 1
+        if (self.round == 2 and self.playersNum == 4) or (self.round == 3 and self.playersNum == 8):
+            self.state = Enum.WINER
+            self.round = 2 if self.playersNum == 4 else 3
+            await self.send(text_data=json.dumps({
+            Enum.TYPE:Enum.END, Enum.STATUS:"im the winer" }))
+        competitors[self.id][Enum.ROUND] = self.round
+        if self.round >= RemoteTournament.games[self.group_name][Enum.GLOBALROUND]:
+            RemoteTournament.games[self.group_name][Enum.GLOBALROUND] = self.round
+        await self.broadcast_dashboard()
+        qualify_socket = await self.qualify_game()
+        if not qualify_socket:
+            return
+        else:
+            qualify_socket.opponent = self
+            self.opponent = qualify_socket
+            await self.start_game(socket1=qualify_socket, socket2=self)
 
     async def start_game(self, socket1, socket2):
         try:

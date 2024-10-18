@@ -99,7 +99,7 @@ class Paddle:
         data2 = {Enum.TYPE: 'sidePaddle', 'pos': new_y}
         await asyncio.gather(   
             self.socket.send(text_data=json.dumps(data1)),
-            self.socket.send_update(data2, self.socket.username)
+            self.socket.opponent.send(text_data=json.dumps(data2))
         )
         self.y = new_y
         self.last_update_time = current_time
@@ -198,17 +198,18 @@ class Game:
             self.leftPlayer.game = self.leftPlayer.task = None
             await sync_to_async(lambda: self.save_game())()
             if self.rightScore == self.leftScore:
-                data = {Enum.TYPE:Enum.END, Enum.STATUS:Enum.EQUAL,Enum.XP: 50}
-                await self.broadcast(data)
+                await self.broadcast({Enum.TYPE:Enum.END, Enum.STATUS:Enum.EQUAL,Enum.XP: 50})
                 return
             status = Enum.WIN if self.rightScore > self.leftScore else Enum.LOSE
             xp = 80 if status == Enum.WIN else 0
-            data = {Enum.TYPE:Enum.END, Enum.STATUS:status,Enum.XP: xp}
-            await self.rightPlayer.send(text_data=json.dumps(data))
+            data1 = {Enum.TYPE:Enum.END, Enum.STATUS:status,Enum.XP: xp}
             status = Enum.WIN if self.leftScore > self.rightScore else Enum.LOSE
             xp = 80 if status == Enum.WIN else 0
-            data = {Enum.TYPE:Enum.END, Enum.STATUS:status,Enum.XP: xp}
-            await self.leftPlayer.send(text_data=json.dumps(data))
+            data2 = {Enum.TYPE:Enum.END, Enum.STATUS:status,Enum.XP: xp}
+            await asyncio.gather(   
+                self.rightPlayer.send(text_data=json.dumps(data1)),
+                self.leftPlayer.send(text_data=json.dumps(data2))
+            )
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -216,7 +217,7 @@ class Game:
 
     async def run_game_tournament(self, goals):
         try:
-            await self.countdown(10, Enum.TIMING1)
+            await self.countdown(0, Enum.TIMING1)
             await self.game(goals)
             self.rightPlayer.handshake = False
             self.leftPlayer.handshake = False
@@ -224,12 +225,18 @@ class Game:
             self.leftPlayer.game = self.leftPlayer.task = None
             status = Enum.QUALIFIED if self.rightScore > self.leftScore else Enum.ELIMINATED
             self.rightPlayer.state = status
-            data = {Enum.TYPE:Enum.END, Enum.STATUS:status, 'debug':'end_game'}
-            await self.rightPlayer.send(text_data=json.dumps(data))
+            data1 = {Enum.TYPE:Enum.END, Enum.STATUS:status, 'debug':'end_game'}
             status = Enum.QUALIFIED if self.leftScore > self.rightScore else Enum.ELIMINATED
             self.leftPlayer.state = status
-            data = {Enum.TYPE:Enum.END, Enum.STATUS:status, 'debug':'end_game'}
-            await self.leftPlayer.send(text_data=json.dumps(data))
+            data2 = {Enum.TYPE:Enum.END, Enum.STATUS:status, 'debug':'end_game'}
+            await asyncio.gather(   
+                self.rightPlayer.send(text_data=json.dumps(data1)),
+                self.leftPlayer.send(text_data=json.dumps(data2))
+            )
+            await asyncio.gather(   
+                self.rightPlayer.qualifyboard(),
+                self.leftPlayer.qualifyboard()
+            )
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -274,9 +281,9 @@ class Game:
 
     async def game_init(self):
         await self.broadcast({Enum.TYPE:Enum.OPPONENTS, 
-        'user1':self.leftPlayer.data,'user2':self.rightPlayer.data})
+        'user1':self.leftPlayer.alias,'user2':self.rightPlayer.alias})
         await asyncio.sleep(0.5)
-        await self.countdown(15, Enum.TIMING2)
+        await self.countdown(1, Enum.TIMING2)
         await asyncio.gather( self.rightpaddle.init_paddel(),
         self.leftPaddle.init_paddel(),)
         await asyncio.sleep(0.2)

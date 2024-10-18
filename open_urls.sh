@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Base URL
-# base_url="http://localhost:5173/game_tournament/8/"
-base_url="http://localhost:5173/game/random/"
+base_url="http://localhost:5173/game_tournament/4/"
+# base_url="http://localhost:5173/game/random/"
 
 # Number of times to open the link
-times_to_open=2
+times_to_open=4
 
 generate_random_name() {
     echo $(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 8 | head -n 1)
@@ -19,7 +19,7 @@ do
     url="${base_url}${i}"
     
     # Open the URL in the default web browser
-    explorer.exe "$url"
+    open "$url"
     
     # Sleep for 1 second between each open
     sleep 1

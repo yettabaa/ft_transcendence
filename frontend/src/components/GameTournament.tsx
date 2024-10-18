@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { BrowserRouter as Router, Route, Routes, useParams } from 'react-router-dom';
-import { Link, useNavigate } from "react-router-dom";
 
 interface Position {
     x: number;
@@ -28,25 +26,40 @@ const GameTournament: React.FC = () => {
     const ball: any = useRef();
     const ws: any = useRef();
     const [ballSize, setBallSize] = useState<number>(0);
-    const { username } = useParams<{ username: string }>();
-    const { type } = useParams<{ type: string }>();
-    const navigate = useNavigate();
+    const { alias } = useParams<{ alias: string }>();
+    const { playersNum } = useParams<{ playersNum: string }>();
     
-    if (username == undefined || username === '' || username == null)
+    if (alias == undefined || alias === '' || alias == null)
         return;
-    
-    const handelMouse = (e: any) => {
-        const tableDimention: any = table.current.getBoundingClientRect();
-        let posPaddle: number = ((e.y - tableDimention.top)
-        / tableDimention.height) * 100;
-        (posPaddle < 10) && (posPaddle = 10);
-        (posPaddle > 90) && (posPaddle = 90);
-        myPaddle.current.style.top = `${posPaddle}%`;
-        ws.current.send(JSON.stringify({
-            type: 'update',
-            y: posPaddle
-        }));
-    }
+    const moveDirection = useRef<number>(0);
+    const moveInterval = useRef<NodeJS.Timeout | null>(null);
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (moveDirection.current !== 0) return; // Avoid multiple intervals
+
+        if (e.key === 'ArrowUp') {
+            moveDirection.current = -1; // Paddle moving up
+        } else if (e.key === 'ArrowDown') {
+            moveDirection.current = 1; // Paddle moving down
+        }
+
+        if (moveDirection.current !== 0) {
+            // Start sending updates every 50ms
+            moveInterval.current = setInterval(() => {
+                if (moveDirection.current == 0) return;
+                console.log('loh', moveDirection.current)
+                ws.current.send(JSON.stringify({
+                    type: 'update',
+                    y: moveDirection.current // Send the movement direction (-1 or 1)
+                }));
+            }, 50); // Update every 50ms
+        }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+        if ((e.key === 'ArrowUp' && moveDirection.current === -1) || (e.key === 'ArrowDown' && moveDirection.current === 1)) {
+            moveDirection.current = 0; // Stop moving
+        }
+    };
 
     const handleResize = () => {
         if (table.current) {
@@ -56,54 +69,31 @@ const GameTournament: React.FC = () => {
         }
     }
 
-    // show a notification bar with "Accept" or "Reject"
-    const [notificationVisible, setNotificationVisible] = useState<boolean>(false);
-    const [notificationMessage, setNotificationMessage] = useState<string>('');
-    const handleAccept = () => {
-        ws.current.send(JSON.stringify({ type: 'handshake' }));
-        setNotificationVisible(false);
-    };
-    const handleReject = () => {
-        ws.current.send(JSON.stringify({ type: 'reject' }));
-        setNotificationVisible(false);
-    };
-
-    // switch between game and dashboard
     const [data, setData] = useState<any>(null);
     const [ingame, setIngame] = useState<boolean>(false)
 
     useEffect(() => {
-        ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game_tournament/${type}/${username}`);
-        ws.current.onopen = () => { console.log('WebSocket connection established'); };
-
-        ws.current.onmessage = (event: any) => {
+        if (!ws.current) {
+            ws.current = new WebSocket(`ws://127.0.0.1:8000/ws/game_tournament/${playersNum}/${alias}`);
+            ws.current.onopen = () => { console.log('WebSocket connection established'); };
+            
+            ws.current.onmessage = (event: any) => {
             const jsondata = JSON.parse(event.data);
-            if (jsondata.type == 'disconnect') {
+            if (jsondata.type != 'ball' && jsondata.type != 'myPaddle' && jsondata.type != 'sidePaddle')
                 console.log(jsondata)
-            } if (jsondata.type == 'end') {
-                console.log(jsondata)
+            if (jsondata.type == 'end') {
                 setIngame(false)
-                setNotificationVisible(false);
+                // setNotificationVisible(false);
                 if (jsondata.status == 'im the winer')
                     return
-                console.log('qualifyboard')
                 ws.current.send(JSON.stringify({ type: 'qualifyboard' }));
-                // if (jsondata.status == 'qualified') {
-                // }
             } if (jsondata.type == 'opponents') {
-                // handleResize()
-                setNotificationMessage(`${jsondata.user1} vs ${jsondata.user2}`);
-                setNotificationVisible(true);
-                console.log(jsondata)
-            } if (jsondata.type == 'ready') {
-                ws.current.send(JSON.stringify({
-                    type: 'start',
-                }));
+                // setNotificationMessage(`${jsondata.user1} vs ${jsondata.user2}`);
+                // setNotificationVisible(true);
+                    
             } if (jsondata.type == 'dashboard') {
                 setData(jsondata.rounds)
                 console.log(jsondata.rounds[0])
-            } if (jsondata.type == 'waiting') {
-                console.log(jsondata)
             } if (jsondata.type == 'init_paddle') {
                 setIngame(true)
                 handleResize()
@@ -117,7 +107,7 @@ const GameTournament: React.FC = () => {
                         ...prevPositions.paddle2,
                         x: jsondata.side,
                     },
-
+                    
                 }))
             }
             if (jsondata.type == 'ball') {
@@ -129,8 +119,11 @@ const GameTournament: React.FC = () => {
                 rightScore.current.innerText = jsondata.right;
                 leftScore.current.innerText = jsondata.left;
             }
-            if (jsondata.type == 'paddle') {
+            if (jsondata.type == 'sidePaddle') {
                 paddle.current.style.top = `${jsondata.pos}%`
+            }
+            if (jsondata.type == 'myPaddle') {
+                myPaddle.current.style.top = `${jsondata.pos}%`
             }
         };
 
@@ -141,23 +134,28 @@ const GameTournament: React.FC = () => {
                 console.error('WebSocket connection died');
             }
         };
-
+        
         ws.current.onerror = (error: any) => { console.error(`WebSocket error: ${error.message}`); };
+    }
         handleResize()
-
-        window.addEventListener('mousemove', handelMouse);
+        
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
         window.addEventListener('resize', handleResize);
         return () => {
-            if (ws.current)
+            if (ws.current && ws.current.readyState === WebSocket.OPEN) {
                 ws.current.close();
-            window.removeEventListener('mousemove', handelMouse);
+                ws.current = null; // Clean up the reference
+            }
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
             window.removeEventListener('resize', handleResize);
         };
     }, []);
-
+    
     return (
         <div className="bg-bg h-[100vh] flex flex-col gap-8 justify-center items-center">
-            {notificationVisible && (
+            {/* {notificationVisible && (
                 <div className="notification-bar bg-blue-600 text-white p-4 rounded flex justify-between items-center">
                     <span>{notificationMessage}</span>
                     <div className="flex gap-2">
@@ -165,7 +163,7 @@ const GameTournament: React.FC = () => {
                         <button className="bg-red-500 p-2 rounded" onClick={handleReject}>Reject</button>
                     </div>
                 </div>
-            )}
+            )} */}
             {ingame && (
                 <>
                     <div className="h-[10%] flex flex-row justify-center items-center">
