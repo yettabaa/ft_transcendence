@@ -39,6 +39,7 @@ class Enum:
     TIMING1 = 'timing1'
     TIMING2 = 'timing2'
     TIME = 'time'
+    TIMINGEND = 'timingend'
  
 class Ball:
     # height = 1.5 * width ()
@@ -233,6 +234,7 @@ class Game:
                 self.rightPlayer.send(text_data=json.dumps(data1)),
                 self.leftPlayer.send(text_data=json.dumps(data2))
             )
+            await self.countdown(0, Enum.TIMINGEND)
             await asyncio.gather(   
                 self.rightPlayer.qualifyboard(),
                 self.leftPlayer.qualifyboard()
