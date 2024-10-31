@@ -62,7 +62,6 @@ class RemoteTournament(AsyncWebsocketConsumer):
         try:
             if self.group_name in RemoteTournament.games:
                 RemoteTournament.games[self.group_name][Enum.COMPETITORS][self.id][Enum.SOCKET] = None
-                await self.broadcast_dashboard()
                 if self.game and self.game.state != Enum.END:
                     if self.task:
                         self.task.cancel()
@@ -80,7 +79,7 @@ class RemoteTournament(AsyncWebsocketConsumer):
                             count += 1
                     if count == self.playersNum:
                         del RemoteTournament.games[self.group_name]
-                # competitors = RemoteTournament.games[self.group_name][COMPETITORS]
+            await self.broadcast_dashboard()
             await self.close()
             await self.channel_layer.group_discard( # type: ignore
                 self.group_name,
