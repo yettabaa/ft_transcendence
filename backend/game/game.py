@@ -218,31 +218,38 @@ class Game:
 
     async def run_game_tournament(self, goals):
         try:
+            if not self.rightPlayer.isConnect or not self.leftPlayer.isConnect:
+                asyncio.current_task().cancel()
             await self.countdown(0, Enum.TIMING1)
             await self.game(goals)
-            self.rightPlayer.handshake = False
-            self.leftPlayer.handshake = False
-            self.rightPlayer.game = self.rightPlayer.task = None
-            self.leftPlayer.game = self.leftPlayer.task = None
-            status = Enum.QUALIFIED if self.rightScore > self.leftScore else Enum.ELIMINATED
-            self.rightPlayer.state = status
-            data1 = {Enum.TYPE:Enum.END, Enum.STATUS:status, 'debug':'end_game'}
-            status = Enum.QUALIFIED if self.leftScore > self.rightScore else Enum.ELIMINATED
-            self.leftPlayer.state = status
-            data2 = {Enum.TYPE:Enum.END, Enum.STATUS:status, 'debug':'end_game'}
-            await asyncio.gather(   
-                self.rightPlayer.send(text_data=json.dumps(data1)),
-                self.leftPlayer.send(text_data=json.dumps(data2))
-            )
-            await self.countdown(0, Enum.TIMINGEND)
-            await asyncio.gather(   
-                self.rightPlayer.qualifyboard(),
-                self.leftPlayer.qualifyboard()
-            )
+            if self.rightScore > self.leftScore:
+                self.leftPlayer.state = Enum.ELIMINATED
+            else:
+                self.rightPlayer.state = Enum.ELIMINATED
+            await self.result_game_tournament()
         except asyncio.CancelledError:
-            pass
+            if not self.leftPlayer.isConnect:
+                self.leftPlayer.state = Enum.ELIMINATED
+            else:
+                self.rightPlayer.state = Enum.ELIMINATED
+            await self.result_game_tournament()
         except Exception as e:
             log.error(f'exeption in run_game_tournament: {e}')
+    
+    async def result_game_tournament(self):
+        self.rightPlayer.game = self.rightPlayer.task = None
+        self.leftPlayer.game = self.leftPlayer.task = None
+        await asyncio.gather(   
+            self.rightPlayer.send(text_data=json.dumps({Enum.TYPE:Enum.END,
+            Enum.STATUS:self.rightPlayer.state, 'debug':'end_game'})),
+            self.leftPlayer.send(text_data=json.dumps({Enum.TYPE:Enum.END,
+            Enum.STATUS:self.leftPlayer.state, 'debug':'end_game'}))
+        )
+        await self.countdown(5, Enum.TIMINGEND)
+        await asyncio.gather(   
+            self.rightPlayer.qualifyboard(),
+            self.leftPlayer.qualifyboard()
+        )
 
     def save_game(self, disconnect=False, user=None):
         self.rightPlayer.user.total_matches += 1
