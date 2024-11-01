@@ -46,7 +46,6 @@ const GameTournament: React.FC = () => {
             // Start sending updates every 50ms
             moveInterval.current = setInterval(() => {
                 if (moveDirection.current == 0) return;
-                console.log('loh', moveDirection.current)
                 ws.current.send(JSON.stringify({
                     type: 'update',
                     y: moveDirection.current // Send the movement direction (-1 or 1)
@@ -111,7 +110,6 @@ const GameTournament: React.FC = () => {
                 }))
             }
             if (jsondata.type == 'ball') {
-                // console.log(jsondata)
                 ball.current.style.top = `${jsondata.y}%`;
                 ball.current.style.left = `${jsondata.x}%`;
             }
