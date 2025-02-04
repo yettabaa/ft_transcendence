@@ -1,3 +1,0 @@
-middleware.py
-how django manage threads (async_to_sync / @database_sync_to_async)
-securiry layer added by django/token/jwt
