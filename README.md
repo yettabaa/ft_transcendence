@@ -1,4 +1,4 @@
-# **Inception**
+# **ft_transcendence**
 
 ![ft_transcendence0](https://github.com/yettabaa/ft_transcendence/blob/main/assets/ft_transcendence0.png)
 ![ft_transcendence1](https://github.com/yettabaa/ft_transcendence/blob/main/assets/ft_transcendence1.png)
